@@ -1,6 +1,6 @@
 {
   "distribution_scope": "published",
-  "format_version": 4,
+  "format_version": 5,
   "lane": "production",
   "okf_version": "0.2",
   "portal_origin": "https://developer.webex.com",

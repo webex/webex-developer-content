@@ -8,11 +8,11 @@ Fetch only relevant Markdown. Scoped indexes link article sections; excerpts req
 
 ## Start here
 
-- [Webhooks - deprecated guide](docs/api/guides/webhooks.md)
 - [Authentication](docs/authentication.md)
 - [Bots](docs/bots.md)
 - [Integrations & Authorization](docs/integrations.md)
 - [Using Webex Service Apps](docs/service-apps.md)
+- [Webhooks | Overview](docs/webhooks.md)
 
 ## Topics
 

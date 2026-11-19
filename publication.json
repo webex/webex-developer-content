@@ -1,6 +1,6 @@
 {
   "archive": "webex-docs-production.tar.gz",
-  "archive_sha256": "bae8590cfd31d5197d1d769a75aa02649a310bcee0824096a22644ec229fab21",
+  "archive_sha256": "50acbb7b3279317d75623ef40d273771a0db91ad39fb1a5cc8105b4b4afd7d27",
   "documents": 646,
   "format_version": 1,
   "lane": "production",
@@ -8,6 +8,6 @@
   "publication_snapshot_sha256": "eef02d9689815c50a76fcf18add9b322a54bd5fd836885db6fc040057975c564",
   "publication_state": "verified_published_snapshot",
   "source_kind": "contentstack_published",
-  "tooling_revision": "64b60cfeaacdf9fad7d6858f4ba281a261cada69",
-  "verified_at": "2026-11-19T19:05:28.268610+00:00"
+  "tooling_revision": "66d7d7457818cbe4e3de37e20bb60362cabd8012",
+  "verified_at": "2026-11-19T20:11:18.108110+00:00"
 }
