@@ -1,0 +1,162 @@
+---
+type: Guide
+title: Web Calling SDK | Click-to-Call
+display_title: Click to Call
+canonical_url: https://developer.webex.com/docs/sdks/web-calling-sdk-click-to-call
+content_type: documentation
+product_group:
+- webex-suite
+categories:
+- calling
+---
+
+> Official Webex documentation: [View this page on Webex for Developers](https://developer.webex.com/docs/sdks/web-calling-sdk-click-to-call)
+
+Click-to-Call allows users to make calls without the need for a registered account and provides a convenient way for guests to join conversations and participate in audio calls. This article outlines how a click-to-call flow can be set up and utilized using the Web Calling SDK.
+
+---
+
+One of the key use cases is leveraging for **click-to-call** flows, where users can initiate a call by simply clicking a button or link. This is particularly useful in scenarios where the user does not need to manually enter any call details, making the process quick and user-friendly.
+
+## Prerequisites
+
+Before continuing, complete the following steps:
+
+1. The admin needs to enable Click-to-Call in the Webex Control Hub by following the [Click-to-Call Access](https://help.webex.com/article/ndzk21eb/) instructions. This step must be completed before proceeding with any other configurations. Once Click-to-Call is enabled, create a service app. See the following guide for details: [Registering a Service App](https://developer.webex.com/docs/sdks/service-apps).
+
+2. Create a guest using your newly created service app. See the following guide for details: [Creating a Guest Using the Service App](https://developer.webex.com/docs/sa-guest-management).
+
+3. Make an API call to request a `jwe` token. See the following API specification for details: [Generate Guest JWE Token](https://developer.webex.com/calling/docs/api/v1/beta-click-to-call/create-a-call-token).
+
+## Configure Click-to-Call Flows
+
+There are a few steps involved in setting up the click-to-call flows using the SDK.
+
+
+
+> **Info**
+>
+> This guide assumes that the application consumes the SDK via CDN. The code snippets and configuration within the steps vary if the application consumes the SDK via NPM. Refer to the [Quickstart Guide](https://developer.webex.com/docs/sdks/webex-calling-sdk-web-quickstart) for examples of these differences.
+
+
+
+### 1. Set up the Configurations
+
+Refer to the [Getting Started Documentation](https://developer.webex.com/docs/sdks/webex-calling-sdk-web-quickstart) to understand how the `webexConfig` object is created.
+
+Once you have your `webexConfig` object, set up your calling configuration:
+
+```javascript
+const callingClientConfig = {
+   logger: loggerConfig,
+   serviceData:{
+      indicator: `guestcalling`,
+      guestName: `guestName`
+   },
+   jwe: `<jwe_token_from_server>`,
+};
+
+const callingConfig = {
+   clientConfig: clientConfig,
+   callingClientConfig: callingClientConfig,
+   logger: loggerConfig,
+};
+```
+
+
+
+> **Info**
+>
+> Supports `guestcalling` indicator in `serviceData`, with optional `guestName` parameter for click-to-call flows.
+
+
+
+
+
+> **Info**
+>
+> The difference between the `callingClientConfig` for a click-to-call flow and a regular calling flow is the presence of `jwe` and `guestcalling` as indicators within the `serviceData` argument for the click-to-call flows. In the case of a regular calling flow, this value is empty.
+
+
+
+### 2. Set up the Calling Client
+
+Create your `calling` object using the `webexConfig` and `callingConfig` objects:
+
+```javascript
+calling = await Calling.init({ webexConfig, callingConfig });
+```
+
+Register your `calling` object and extract the `callingClient` from the promise:
+
+```javascript
+calling.on("ready", () => {
+   calling.register().then(async () => {
+      callingClient = window.callingClient = calling.callingClient;
+   });
+});
+```
+
+Using the `callingClient` object, extract the `line` object from it and register the line :
+
+```javascript
+const line = Object.values(callingClient.getLines())[0];
+line.on('registered', (lineInfo) => {
+   // outbound call set-up will be placed here
+});
+line.register();
+```
+
+### 3. Set up the Outbound Call
+
+Create the `call` instance for outbound calls using the `makeCall()` method of the `line` object:
+
+```javascript
+line.on('registered', (lineInfo) => {
+   const call = line.makeCall();
+});
+```
+
+
+
+> **Info**
+>
+> For a click-to-call flow, leave the parameter empty when calling `makeCall()`.
+
+
+
+In order to utilize the `dial()` method, you need an audio stream object. To create this object use the `Calling` class:
+
+```javascript
+const localAudioStream = await Calling.createMicrophoneStream({ audio: true });
+```
+
+Trigger the `call` object's `dial()` method to initiate the call. Remember to pass the `localAudioStream` object as an argument:
+
+```javascript
+call.dial({ localAudioStream });
+```
+
+
+
+> **Info**
+>
+> To implement a click-to-call flow, run the above steps in a single sequence.
+
+
+
+### 4. Deregister the Calling Client
+
+After the call disconnects, it's a good practice to deregister the client:
+
+```javascript
+calling.deregister();
+```
+
+## Outbound Call Events
+
+Click-to-Call flows follow the same set of events within a call as a regular flow. For further information, see: [Getting Started Documentation](https://developer.webex.com/docs/sdks/webex-calling-sdk-web-quickstart).
+
+## References
+
+Refer to this [demo](https://github.com/WebexSamples/webex-js-sdk-calling-demo) repository to understand more about how to leverage the Click-to-Call feature.

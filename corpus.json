@@ -1,0 +1,11 @@
+{
+  "distribution_scope": "published",
+  "format_version": 4,
+  "lane": "production",
+  "okf_version": "0.2",
+  "portal_origin": "https://developer.webex.com",
+  "publication_snapshot_sha256": "eef02d9689815c50a76fcf18add9b322a54bd5fd836885db6fc040057975c564",
+  "publication_state": "verified_published_snapshot",
+  "source_kind": "contentstack_published",
+  "source_revision": "cms-sha256:eef02d9689815c50a76fcf18add9b322a54bd5fd836885db6fc040057975c564"
+}

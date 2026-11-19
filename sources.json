@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "webex-developer-documentation",
+      "type": "generated_markdown_corpus",
+      "path": ".",
+      "manifest": "manifest.jsonl",
+      "canonical_base_url": "https://developer.webex.com/",
+      "source_revision": "cms-sha256:eef02d9689815c50a76fcf18add9b322a54bd5fd836885db6fc040057975c564",
+      "retrieval_base_url": "https://raw.githubusercontent.com/webex/webex-developer-content/main/",
+      "publication_state": "verified_published_snapshot",
+      "publication_receipt": "publication.json",
+      "source_workflow_url": "https://github.com/WebexDeveloperEcosystem/developer-portal-docs/actions/runs/44594338383"
+    },
+    {
+      "id": "webex-openapi-specs",
+      "type": "external_repository",
+      "url": "https://github.com/webex/webex-openapi-specs",
+      "relationship": "linked",
+      "mirrored": false
+    }
+  ]
+}

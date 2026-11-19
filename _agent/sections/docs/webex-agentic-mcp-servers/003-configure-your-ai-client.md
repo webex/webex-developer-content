@@ -1,0 +1,35 @@
+---
+type: Excerpt
+canonical_url: https://developer.webex.com/docs/webex-agentic-mcp-servers
+lane: production
+source_revision: cms-sha256:eef02d9689815c50a76fcf18add9b322a54bd5fd836885db6fc040057975c564
+publication_state: verified_published_snapshot
+heading_hierarchy:
+- Configure Your AI Client
+context_status: requires_parent_review
+---
+
+> Documentation excerpt. Cite [the canonical article](https://developer.webex.com/docs/webex-agentic-mcp-servers). [Full Markdown](../../../../docs/webex-agentic-mcp-servers.md). Dependencies are not exhaustively verified; read the full article for cross-section procedures or missing context.
+
+Setup and context to read: [Authentication](002-authentication.md)
+
+## Article introduction
+
+This guide helps developers integrate Webex MCP (Model Context Protocol) servers with popular AI clients. MCP enables AI agents to securely access Webex capabilities through the Model Context Protocol.
+
+## Selected section
+
+## Configure Your AI Client
+
+Choose your AI client below and follow the configuration guide:
+
+- [Amazon Quick](https://developer.webex.com/docs/webex-agentic-mcp-servers-amazon-quick)
+- [Claude Code](https://developer.webex.com/docs/webex-agentic-mcp-servers-claude-code)
+- [Claude Desktop](https://developer.webex.com/docs/webex-agentic-mcp-servers-claude-desktop)
+- [Codex](https://developer.webex.com/docs/webex-agentic-mcp-servers-codex)
+- [Copilot Studio](https://developer.webex.com/docs/webex-agentic-mcp-servers-copilot-studio)
+- [Cursor](https://developer.webex.com/docs/webex-agentic-mcp-servers-cursor)
+- [Gemini CLI](https://developer.webex.com/docs/webex-agentic-mcp-servers-gemini-cli)
+- [VS Code](https://developer.webex.com/docs/webex-agentic-mcp-servers-vscode)
+
+---

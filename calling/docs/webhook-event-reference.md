@@ -1,0 +1,105 @@
+---
+type: Guide
+title: Webex Webhooks API | Event reference
+display_title: Event reference
+canonical_url: https://developer.webex.com/docs/webhook-event-reference
+content_type: documentation
+product_group:
+- webex-suite
+categories:
+- admin
+- calling
+- create
+- meeting
+- messaging
+---
+
+> Official Webex documentation: [View this page on Webex for Developers](https://developer.webex.com/docs/webhook-event-reference)
+
+Find Webex Webhooks API resources, events, triggers, filters, and links to product-specific payload definitions.
+
+## Use this reference
+
+This catalog covers the Webhooks API used for Messaging, Meetings, Calling, and platform events. See [registration](https://developer.webex.com/docs/register-and-manage-webhooks) for permissions, ownership, filter syntax, and firehose limits; see [receiving events](https://developer.webex.com/docs/receive-and-verify-webhooks) for the envelope and signatures. Contact Center event payloads have a [separate reference](https://developer.webex.com/docs/webhooks-cc).
+
+Fields and filters are case-sensitive API identifiers. Use the resource-specific API for its complete schema and required scopes. The catalog does not supply a universal payload schema, delivery identifier, or set of OAuth scopes.
+
+
+
+## Messaging
+
+For bots in group spaces, `messages` notifications are delivered only for messages that mention the bot. See [Differences between bots and people](https://developer.webex.com/docs/bots#differences-between-bots-and-people).
+
+| Resource | Event | Trigger | Supported filters |
+| --- | --- | --- | --- |
+| `attachmentActions` | `created` | A user interacted with one of your [cards](https://developer.webex.com/docs/buttons-and-cards). | `messageId` — limit to a particular message, by ID.<br />`personId` — limit to a particular person, by ID.<br />`roomId` — limit to a particular room, by ID. |
+| `memberships` | `created` | Someone joined a room that you're in or you've been added to a new room. | `roomId` — limit to a particular room, by ID.<br />`personId` — limit to a particular person, by ID.<br />`personEmail` — limit to a particular person, by email.<br />`isModerator` — limit to moderators of a room. |
+| `memberships` | `updated` | Someone's membership was updated in a room that you're in; primarily used to detect moderator changes. | `roomId` — limit to a particular room, by ID.<br />`personId` — limit to a particular person, by ID.<br />`personEmail` — limit to a particular person, by email.<br />`isModerator` — limit to moderators of a room. |
+| `memberships` | `deleted` | Someone left or was kicked out of a room that you're in, or you left or were removed from a room; only triggers for group rooms, not 1-to-1 rooms. | `roomId` — limit to a particular room, by ID.<br />`personId` — limit to a particular person, by ID.<br />`personEmail` — limit to a particular person, by email.<br />`isModerator` — limit to moderators of a room. |
+| `messages` | `created` | New message posted into a room that you're in. | `roomId` — limit to a particular room, by ID.<br />`roomType` — limit to a particular room type (such as `direct` or `group`).<br />`personId` — limit to a particular person, by ID.<br />`personEmail` — limit to a particular person, by email.<br />`mentionedPeople` — limit to messages which contain these mentioned people, by person ID; accepts `me` as a shorthand for your own person ID; separate multiple values with commas.<br />`hasFiles` — limit to messages which contain file content attachments.<br />`hasAttachments` — limit to messages which contain content attachments. |
+| `messages` | `deleted` | A message was deleted from a room that you're in. | `roomId` — limit to a particular room, by room ID.<br />`roomType` — limit to a particular room type (such as `direct` or `group`).<br />`personId` — limit to a particular person, by ID.<br />`personEmail` — limit to a particular person, by email.<br />`mentionedPeople` — limit to messages which contain these mentioned people, by person ID; accepts `me` as a shorthand for your own person ID; separate multiple values with commas.<br />`hasFiles` — limit to messages which contain file content attachments.<br />`hasAttachments` — limit to messages which contain content attachments. |
+| `rooms` | `created` | A new room was created by you or one of your integrations. | `type` — limit to a particular room type (such as `direct` or `group`).<br />`isLocked` — limit to rooms that are locked. |
+| `rooms` | `updated` | A room that you're in was updated; primarily used to detect when a room becomes Locked or Unlocked. | `type` — limit to a particular room type (such as `direct` or `group`).<br />`isLocked` — limit to rooms that are locked. |
+| `rooms` | `migrated` | A room you or your bot is in was migrated to a different geography, usually during an organization’s change of data residency. There will be a change in the roomId and your app should use the new roomId. | |
+
+## Meetings
+
+| Resource | Event | Trigger | Supported filters |
+| --- | --- | --- | --- |
+| `meetings` | `created` | A new meeting was created. | `id` — Meeting Id.<br />`meetingNumber` — Meeting number.<br />`meetingType` — Meeting type.<br />`state` — Meeting state.<br />`hostEmail` — Email address for the meeting host.<br />`hostUserId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+| `meetings` | `updated` | A meeting that you're in was updated. | `id` — Meeting Id.<br />`meetingNumber` — Meeting number.<br />`meetingType` — Meeting type.<br />`state` — Meeting state.<br />`hostEmail` — Email address for the meeting host.<br />`hostUserId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+| `meetings` | `deleted` | A meeting that you're in was deleted. | `id` — Meeting Id.<br />`meetingNumber` — Meeting number.<br />`meetingType` — Meeting type.<br />`state` — Meeting state.<br />`hostEmail` — Email address for the meeting host.<br />`hostUserId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+| `meetings` | `started` | A meeting was started. | `id` — Meeting Id.<br />`meetingNumber` — Meeting number.<br />`meetingType` — Meeting type.<br />`state` — Meeting state.<br />`hostEmail` — Email address for the meeting host.<br />`hostUserId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+| `meetings` | `ended` | A meeting was ended. | `id` — Meeting Id.<br />`meetingNumber` — Meeting number.<br />`meetingType` — Meeting type.<br />`state` — Meeting state.<br />`hostEmail` — Email address for the meeting host.<br />`hostUserId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+| `recordings` | `created` | A new recording was created. | `id` — Recording Id.<br />`meetingId` — Unique identifier for the parent meeting series, scheduled meeting or meeting instance for which recordings are being requested.<br />`scheduledMeetingId` — Unique identifier for the parent scheduled meeting which the recording belongs to.<br />`meetingSeriesId` — Unique identifier for the parent meeting series which the recording belongs to.<br />`hostEmail` — Email address for the meeting host.<br />`hostUserId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+| `recordings` | `updated` | A recording that you're in was updated. | `id` — Recording Id.<br />`meetingId` — Unique identifier for the parent meeting series, scheduled meeting or meeting instance for which recordings are being requested.<br />`scheduledMeetingId` — Unique identifier for the parent scheduled meeting which the recording belongs to.<br />`meetingSeriesId` — Unique identifier for the parent meeting series which the recording belongs to.<br />`hostEmail` — Email address for the meeting host.<br />`hostUserId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+| `recordings` | `deleted` | A recording that you're in was deleted permanently. There is no notification provided for moving a recording to the trash bin currently. | `id` — Recording Id.<br />`meetingId` — Unique identifier for the parent meeting series, scheduled meeting or meeting instance for which recordings are being requested.<br />`scheduledMeetingId` — Unique identifier for the parent scheduled meeting which the recording belongs to.<br />`meetingSeriesId` — Unique identifier for the parent meeting series which the recording belongs to.<br />`hostEmail` — Email address for the meeting host.<br />`hostUserId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+| `meetingParticipants` | `joined` | A participant has joined the meeting. | `id` — Participant Id.<br />`meetingId` — Meeting Instance Id.<br />`state` — Meeting state.<br />`hostEmail` — Email address for the meeting host.<br />`hostPersonId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+| `meetingParticipants` | `left` | A participant has left the meeting. | `id` — Participant Id.<br />`meetingId` — Meeting Instance Id.<br />`state` — Meeting state.<br />`hostEmail` — Email address for the meeting host.<br />`hostPersonId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+| `meetingTranscripts` | `created` | A new transcript was created. | `id` — Transcript Id.<br />`meetingId` — Unique identifier for the parent meeting series, scheduled meeting or meeting instance for which transcripts are being requested.<br />`scheduledMeetingId` — Unique identifier for the parent scheduled meeting which the transcript belongs to.<br />`meetingSeriesId` — Unique identifier for the parent meeting series which the transcript belongs to.<br />`hostEmail` — Email address for the meeting host.<br />`hostUserId` — Unique identifier for meeting host.<br />`siteUrl` — Webex site URL to query. |
+
+## Calling
+
+`telephony_calls`, `telephony_conference`, and `telephony_mwi` notifications are delivered only for Webex Calling users.
+
+Check [interest registrations](https://developer.webex.com/docs/call-control#interest-registration) before expecting delivery. Detailed [Calling payload schemas](https://developer.webex.com/docs/call-control#webhook-payload-schemas) remain in the Calling guide. Converged recordings in the current catalog describe call recordings.
+
+| Resource | Event | Trigger | Supported filters |
+| --- | --- | --- | --- |
+| `telephony_calls` | `created` | You started (originated) or received a call. | `personality` — limit to a particular call personality (`clickToDial`, `originator`, or `terminator`).<br />`state` — limit to a particular call state (`alerting`, `connected`, `connecting`, `disconnected`, `held`, or `remoteHeld`).<br />`number` — limit to calls to a particular address or number.<br />`personId` — limit to a particular person, by ID.<br />`callType` — limit to a particular call type (`emergency`, `external`, `location`, `organization`, `other`, or `repair`). |
+| `telephony_calls` | `updated` | A call you started or received, was updated (e.g. call was answered, forwarded, resumed, etc.). | `personality` — limit to a particular call personality (`clickToDial`, `originator`, or `terminator`).<br />`state` — limit to a particular call state (`alerting`, `connected`, `connecting`, `disconnected`, `held`, or `remoteHeld`).<br />`number` — limit to calls to a particular address or number.<br />`personId` — limit to a particular person, by ID.<br />`callType` — limit to a particular call type (`emergency`, `external`, `location`, `organization`, `other`, or `repair`). |
+| `telephony_calls` | `deleted` | A call you started or received, was disconnected (deleted). | `personality` — limit to a particular call personality (`clickToDial`, `originator`, or `terminator`).<br />`state` — limit to a particular call state (`alerting`, `connected`, `connecting`, `disconnected`, `held`, or `remoteHeld`).<br />`number` — limit to calls to a particular address or number.<br />`personId` — limit to a particular person, by ID.<br />`callType` — limit to a particular call type (`emergency`, `external`, `location`, `organization`, `other`, or `repair`). |
+| `telephony_conference` | `created` | A conference is created. | |
+| `telephony_conference` | `updated` | A conference is updated through other conference APIs (held, resumed, muted, unmuted, participantMuted, participantUnmuted, updated, participantDeafened, participantUndeafened). | |
+| `telephony_conference` | `deleted` | A conference is deleted when the conference ends. | |
+| `telephony_mwi` | `updated` | Your Webex Calling voicemail messages were updated (e.g. message was received, deleted, marked as read, or marked as unread). | |
+| `telephony_agent` | `updated` | A call queue agent's state changed, the agent joined or left a queue, or the agent entered a wrap-up code. | `actorId` — limit to a particular actor, by ID.<br />`actorType` — limit to a particular actor type (`PEOPLE`, `PLACE`, or `VIRTUAL_LINE`). |
+| `telephony_agentMonitoring` | `updated` | An agent monitoring status was updated when a queue call to an agent ends or is transferred. | `actorId` — limit to a particular actor, by ID.<br />`actorType` — limit to a particular actor type (`PEOPLE`, `PLACE`, or `VIRTUAL_LINE`). |
+| `telephony_queue` | `updated` | A call queue event occurred (e.g. call added, answered, abandoned, bounced, overflowed, stranded, transferred, or policy applied). | `actorId` — limit to a particular actor, by ID. |
+| `telephony_queueMonitoring` | `updated` | Real-time call center monitoring status was updated, including queue metrics and agent availability. | `actorId` — limit to a particular actor, by ID. |
+| `convergedRecordings` | `created` | A new converged recording (for now call recording) was created. | `recordingId` — Recording ID.<br />`ownerId` — Identifier for the recording owner for which recordings are being requested.<br />`ownerEmail` — Email address for the recording owner.<br />`ownerType` — The owner type for the recording.<br />`storageRegion` — Unique identifier for the region where the recording is stored.<br />`serviceType` — Unique identifier for the service type which the recording belongs to.<br />`locationId` — Unique identifier for location. |
+| `convergedRecordings` | `deleted` | A new converged recording (for now call recording) was deleted. | `recordingId` — Recording ID.<br />`ownerId` — Identifier for the recording owner for which recordings are being requested.<br />`ownerEmail` — Email address for the recording owner.<br />`ownerType` — The owner type for the recording.<br />`storageRegion` — Unique identifier for the region where the recording is stored.<br />`serviceType` — Unique identifier for the service type which the recording belongs to.<br />`locationId` — Unique identifier for location. |
+| `convergedRecordings` | `updated` | A converged recording (for now call recording) was updated. | `recordingId` — Recording ID.<br />`ownerId` — Identifier for the recording owner for which recordings are being requested.<br />`ownerEmail` — Email address for the recording owner.<br />`ownerType` — The owner type for the recording.<br />`storageRegion` — Unique identifier for the region where the recording is stored.<br />`serviceType` — Unique identifier for the service type which the recording belongs to.<br />`locationId` — Unique identifier for location. |
+| `uc_counters` | `updated` | A dedicated instance performance counter was updated. This is an organization-wide webhook for admins. The scope required to register this webhook is `wxc-dedicateduc:admin_perfmon_read`. | `clusterName` — The cluster name.<br />`hostName` — The host name.<br />`nodeType` — The node type.<br />`agentId` — The agent id. |
+
+## Platform and administration
+
+`applications` describes application creation, updates, and deletion; `serviceApp` describes authorization and deauthorization. See [their registration requirements](https://developer.webex.com/docs/register-and-manage-webhooks#choosing-applications-vs-serviceapp-webhooks). For a Service App authorization notification, `data.authorizerOrgId` identifies the authorizing customer organization.
+
+| Resource | Event | Trigger | Supported filters |
+| --- | --- | --- | --- |
+| `dataSources` | `created` | A dataSource was registered. For user-owned registrations, the API accepts `byods:datasource_read`, `spark-admin:datasource_read`, or `spark:all`. Organization-owned registrations require a Full admin with `byods:datasource_read` or `spark-admin:datasource_read`. | `id` — limit to a particular data source, by ID.<br />`schemaId` — limit to a schema id, by ID.<br />`appId` — limit to a particular application id, by ID.<br />`orgId` — limit to a particular organization id, by ID. |
+| `dataSources` | `deleted` | A dataSource was deleted. For user-owned registrations, the API accepts `byods:datasource_read`, `spark-admin:datasource_read`, or `spark:all`. Organization-owned registrations require a Full admin with `byods:datasource_read` or `spark-admin:datasource_read`. | `id` — limit to a particular data source, by ID.<br />`schemaId` — limit to a schema id, by ID.<br />`appId` — limit to a particular application id, by ID.<br />`orgId` — limit to a particular organization id, by ID. |
+| `dataSources` | `updated` | A dataSource was updated. For user-owned registrations, the API accepts `byods:datasource_read`, `spark-admin:datasource_read`, or `spark:all`. Organization-owned registrations require a Full admin with `byods:datasource_read` or `spark-admin:datasource_read`. | `id` — limit to a particular data source, by ID.<br />`schemaId` — limit to a schema id, by ID.<br />`appId` — limit to a particular application id, by ID.<br />`orgId` — limit to a particular organization id, by ID. |
+| `serviceApp` | `authorized` | A Service App that you created was authorized. Use `spark:applications_webhook_write` on the token that creates the webhook. The API also accepts `application:webhooks_write` or `spark:all`. | `id` — limit to this Service App’s application id.<br />`friendlyId` — limit to this Service App’s friendly ID.<br />`trainSiteNames` — limit to Service Apps authorized for this trainSiteName.<br />`adminTrainSiteNames` — limit to Service App authorized for this adminTrainSiteName. |
+| `serviceApp` | `deauthorized`| A Service App that you created was deauthorized. Use `spark:applications_webhook_write` on the token that creates the webhook. The API also accepts `application:webhooks_write` or `spark:all`. | `id` — limit to this Service App’s application id.<br />`friendlyId` — limit to this Service App’s friendly ID.<br />`trainSiteNames` — limit to Service Apps deauthorized for this trainSiteName.<br />`adminTrainSiteNames` — limit to Service App deauthorized for this adminTrainSiteName. |
+| `applications` | `created` | A Bot, Integration, or Service App was created in your organization. Requires a Full admin with either `spark:applications_webhook_write` or `application:webhooks_write`, and `ownedBy: "org"`. | None |
+| `applications` | `updated` | A Bot, Integration, or Service App was updated in your organization. The notification includes an application lifecycle snapshot in `data`; see [Interpret payloads](https://developer.webex.com/docs/webhook-event-reference#interpret-payloads) for its fields. Requires a Full admin with either `spark:applications_webhook_write` or `application:webhooks_write`, and `ownedBy: "org"`. | None |
+| `applications` | `deleted` | A Bot, Integration, or Service App was deleted in your organization. Requires a Full admin with either `spark:applications_webhook_write` or `application:webhooks_write`, and `ownedBy: "org"`. | None |
+| `adminBatchJobs` | `statusChanged` | A scheduled admin batch job, like “location change”, changed the status. | `jobType` — The job type.<br /><br/>**IMPORTANT**: If you register for a generic webhook without a `jobType` filter, you may receive additional notifications beyond what was scheduled via API and Control Hub. |
+
+## Interpret payloads
+
+The [common envelope](https://developer.webex.com/docs/receive-and-verify-webhooks#handling-requests-from-webex) identifies the registration, resource, and event. Interpret `data` using the matching resource API. Message notifications can omit sensitive content; retrieve it with an authorized resource request. For `applications`, `data` is a lifecycle snapshot containing `id`, `type`, `name`, `friendlyId`, `orgId`, `createdBy`, and `created`, plus `scopes` when nonempty. An `updated` notification supplies this snapshot rather than a field-level diff. Do not assume it contains every field returned by an application details API.
+
+For field-level schemas, distinguish required, optional, and nullable values using the owning API reference. Preserve field names, casing, and timestamp units. The source catalog does not document those details uniformly, so do not infer them from one example.

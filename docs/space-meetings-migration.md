@@ -1,0 +1,90 @@
+---
+type: Guide
+title: Space Meetings Migration
+display_title: Space Meetings Migration
+canonical_url: https://developer.webex.com/docs/space-meetings-migration
+content_type: documentation
+product_group:
+- webex-suite
+---
+
+> Official Webex documentation: [View this page on Webex for Developers](https://developer.webex.com/docs/space-meetings-migration)
+
+This documentation describes the upcoming changes in meetings workflow functionality for the mobile and web SDKs. It also includes links to detailed migration documentation.
+
+
+
+To request or manage this sandbox, open the [official portal page](<https://developer.webex.com/docs/space-meetings-migration>) and sign in.
+
+
+
+## Terminology
+
+This table defines the terminology we'll be referencing in this article:
+
+
+
+| **Term**              | **Description**                                              |
+| --------------------- | ------------------------------------------------------------ |
+| **USM Meeting** | Unified Space Meetings a.k.a. [Improved Meetings associated with a Space](https://help.webex.com/en-us/article/gxw5jz/Webex-App-%7C-Improved-meetings-associated-with-a-space) are a subset of meetings happening on the advanced Webex Suite Meetings platform. These meetings use the new suite backend and happen in spaces.  |
+| **Create a meeting**  | When a meeting is generated using the [/meetings](https://developer.webex.com/docs/api/v1/meetings) public API. |
+| **Start a meeting**   | When a meeting link is used to start a meeting as the first participant. |
+| **Join a meeting**    | When a meeting link is used to join an on-going meeting as a subsequent participant. |
+| **Space meeting**     | When a meeting is created using [/meetings](https://developer.webex.com/docs/api/v1/meetings) with `roomId` = `<base64Id of room>` and `adhoc = false`. |
+| **Instant meeting**   | When a meeting is created using [/meetings](https://developer.webex.com/docs/api/v1/meetings) with `roomId` = `<base64Id of room>` and `adhoc = true`. |
+| **Scheduled meeting** | When a meeting is created using [/meetings](https://developer.webex.com/docs/api/v1/meetings) with `roomId` = `<empty>` and `adhoc = false`. |
+
+## Required SDK Versions
+
+Please make a note of the required SDK versions and their dates of release.
+
+**Minimum Web SDK Version:** 2.60.0. Contains the new API `reclaimHost()`.
+
+**Minimum Mobile SDK Version:** 3.11.0. Contains the new APIs `reclaimHost()`, `makeHost()`, and `inviteParticipant()`.
+
+
+
+> **Info**
+>
+> Creating instant meetings using the SDKs will be unavailable from version 3.11.0 for mobile SDKs and 2.60.0 for the web SDK. Going forward you'll need to use the public APIs.
+
+
+
+## Documentation
+
+We've provided the following detailed guides to help you with your migration:
+
+- [Web Migration Guide](https://github.com/webex/webex-js-sdk/wiki/Migration-to-improved-meetings-associated-with-a-space)
+- [iOS Migration Guide](https://github.com/webex/webex-ios-sdk/wiki/Migration-to-improved-meetings-associated-with-a-space)
+- [Android Migration Guide](https://github.com/webex/webex-android-sdk/wiki/Migration-to-improved-meetings-associated-with-a-space)
+
+If you have further questions, please contact us via the [Webex Developer Portal Support Page](https://developer.webex.com/support).
+
+## Workflow Changes
+
+The following table details the changes in meetings workflow functionality.
+
+#### Legend
+
+<br/>
+
+● = API Change
+
+○ = No API Change
+
+■ = Experience Change
+
+□ = No Experience Change
+
+
+
+| **Available API Function**                                                 | **API Caller is from the space-owning org**                     | **API Caller is from an external org**                           | **API Caller is from the free consumer org**                         | **Notes**                                                    |
+| ------------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- | ------------------------------------------------------------ |
+| Create a meeting using Public APIs<br /><br /> ● ■<br />     | Space **✓**<br />Instant **✓**<br />Scheduled **✓** | Space **Х**<br />Instant **Х**<br />Scheduled **✓**          | Space **X**<br />Instant **X**<br />Scheduled **✓**       | **Before:** Meeting link is static and retrieved using `roomId`.<br /><br />**After:** Meeting link is dynamic. A developer needs to call the public API to create a meeting link. |
+| Start a meeting without waiting in the lobby when`enabledJoinBeforeHost` = `false` (SDK)<br /><br /> ● ■<br /> | Space **✓**<br />Instant **✓**<br />Scheduled **✓** | Space **Х**<br />Instant **✓**<br />Scheduled **X**<br /><br />**NOTE**: In the Webex app, a space meeting also requires the invitee list to be populated. Not everyone becomes a co-host. Non-invitees will be in the lobby. | Space **Х**<br />Instant **✓**<br />Scheduled **X**<br /> | **Before:** Participant can start meetings using the `roomId`.<br /><br />**After:** Participant requires the meeting link, meeting number, or SIP URI to start the meeting.<br /><br />**Space**: A consumer org or external org participant who is **NOT** a member of the space has to be admitted by host even if a password is used to join meeting.<br /><br />**Instant**: Anyone can join an instant meeting before the host without waiting in lobby.<br /><br />**Scheduled**: A consumer org or external org participant does **NOT** have to be admitted by the host when a password is used to join  the meeting. |
+| Start a meeting without waiting in the lobby when `enabledJoinBeforeHost` =`true` (SDK)<br /><br /> ● ■<br /><br /> | Space **✓**<br />Instant **✓**<br />Scheduled **✓** | Space **✓**<br />Instant **✓**<br />Scheduled **✓**          | Space **✓**<br />Instant **✓**<br />Scheduled **✓**       | **Before:** Participant can start the meeting using `roomId`.<br /><br />**After:** Participant requires the meeting link, meeting number, or SIP URI to start the meeting. |
+| Join after a meeting starts (SDK)<br /><br /> ● ■<br />      | Space **✓**<br />Instant **✓**<br />Scheduled **✓** | Space **✓**<br />Instant **✓**<br />Scheduled **✓**          | Space **✓**<br />Instant **✓**<br />Scheduled **✓**       | **Before:** Participant can start the meeting using `roomId`.<br /><br />**After:** Participant requires the meeting link, meeting number, or SIP URI to start the meeting. |
+| Use the host PIN to become the meeting host<br /><br />○ □<br /><br /> | Space **✓**<br />Instant **✓**<br />Scheduled **✓** | Space **✓**<br />Instant **✓**<br />Scheduled **✓**          | Space **✓**<br />Instant **✓**<br />Scheduled **✓**       | 1. A host PIN or password is required only for participants who are **NOT** on the invitee list or **NOT** a member of the space.<br /><br />2. When a participant joins using a meeting number or SIP address they are prompted to enter the host PIN or meeting password. Participants can enter the host PIN and join the meeting as a host.<br /><br />3. When a participant joins using a meeting link they will **NOT** be prompted to enter a PIN or password. Participants can join meetings but will not be hosts.  (Participant can become hosts mid-meeting by using the `reclaim host` API to enter the host      PIN and they can be made hosts by an existing host by calling the `make host` API. |
+| Join a meeting after entering a password or captcha<br /><br /> ● ■<br /><br /> | Space **✓**<br />Instant **✓**<br />Scheduled **✓** | Space **✓**<br />Instant **✓**<br />Scheduled **✓**          | Space **✓**<br />Instant **✓**<br />Scheduled **✓**       | **Before:** Participant can start the meeting using `roomId`.<br /><br />**After:** Participant requires the meeting number, or SIP URI to start the meeting. 5 wrong password entries require solving a captcha.<br /><br />1. A password is required only for participants who are **NOT** a part of the invitee list or **NOT** a member of the space.<br /><br />2. When a participant joins using meeting number or a SIP address, they will be prompted to enter host PIN or meeting password. Participants can enter the password and join the meeting as a regular participant. |
+| Invite additional participants mid-meeting<br /><br /> ● □<br /> | Space **✓**<br />Instant **✓**<br />Scheduled **✓** | Space **✓**<br />Instant **✓**<br />Scheduled **✓**          | Space **✓**<br />Instant **✓**<br />Scheduled **✓**       | Only the host or co-host can invite additional participants to the meeting. |
+| Initialize the Webex Assistant mid-meeting<br /><br /> ○ ■<br /> | Space **✓**<br />Instant **✓**<br />Scheduled **✓** | Space **✓**<br />Instant **✓**<br />Scheduled **✓**          | Space **✓**<br />Instant **✓**<br />Scheduled **✓**       | **Before:** Space meetings do not have advanced meeting capabilities via Webex Assistant such as starting transcriptions, captions, languages, etc.<br /><br />**After:** Space meetings have the same capabilities as regular Webex meetings when the Webex Assistant is enabled.<br /><br />1. Only meetings created by a licensed user can enable the Webex Assistant features. <br /><br />2. Any participant with the host role can start the Webex Assistant.<br /> |

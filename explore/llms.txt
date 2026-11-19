@@ -1,0 +1,8 @@
+# Webex explore documentation
+
+> Verified published documentation snapshot. Cite each document's canonical_url. Duplicate category copies represent the same document.
+
+## Documents
+
+- [Frequently Asked Questions](docs/frequently-asked-questions.md) · [Sections](../_agent/sections/docs/frequently-asked-questions/index.md)
+- [Webex API and SDK Support Policy](docs/webex-api-and-sdk-support-policy.md) · [Sections](../_agent/sections/docs/webex-api-and-sdk-support-policy/index.md)

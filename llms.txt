@@ -1,0 +1,41 @@
+# Webex Developer Documentation
+
+> Webex documentation for building applications and integrations.
+
+420 guides; 226 blog posts. Source snapshot: verified_published_snapshot. [Corpus metadata](corpus.json); [Portal](https://developer.webex.com).
+
+Fetch only relevant Markdown. Scoped indexes link article sections; excerpts require linked setup/context and full-article review when dependencies are unclear. Retrieve one copy per `canonical_url` and cite it. Dynamic controls, scope catalogs, MCP endpoints, and conditional features may require the live portal.
+
+## Start here
+
+- [Webhooks - deprecated guide](docs/api/guides/webhooks.md)
+- [Authentication](docs/authentication.md)
+- [Bots](docs/bots.md)
+- [Integrations & Authorization](docs/integrations.md)
+- [Using Webex Service Apps](docs/service-apps.md)
+
+## Topics
+
+- [admin](admin/llms.txt)
+- [app-hub](app-hub/llms.txt)
+- [calling](calling/llms.txt)
+- [compliance](compliance/llms.txt)
+- [create](create/llms.txt)
+- [devices](devices/llms.txt)
+- [explore](explore/llms.txt)
+- [mcp](mcp/llms.txt)
+- [meeting](meeting/llms.txt)
+- [messaging](messaging/llms.txt)
+- [webex-connect](webex-connect/llms.txt)
+- [webex-contact-center](webex-contact-center/llms.txt)
+
+## Inventory
+
+- [All articles](llms-sitemap.md)
+- [Documentation manifest](manifest.jsonl): filter in code; do not load wholesale into model context.
+- [Section inventory](sections.jsonl): filter in code for headings, retrieval URLs, context references, and checksums.
+
+## Optional
+
+- [Blog posts](blog/llms.txt)
+- [Public OpenAPI contracts](https://github.com/webex/webex-openapi-specs): external; not included in this export.

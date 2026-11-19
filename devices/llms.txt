@@ -1,0 +1,12 @@
+# Webex devices documentation
+
+> Verified published documentation snapshot. Cite each document's canonical_url. Duplicate category copies represent the same document.
+
+## Documents
+
+- [Calling Device ID Guide](docs/calling-device-id-guide.md) · [Sections](../_agent/sections/docs/calling-device-id-guide/index.md)
+- [Device Developer's Guide | Consolidated Guide](docs/device-developers-guide.md) · [Sections](../_agent/sections/docs/device-developers-guide/index.md)
+- [Devices | Overview](docs/devices.md) · [Sections](../_agent/sections/docs/devices/index.md)
+- [Webex API Basic Troubleshooting Steps | Consolidated Guide](docs/troubleshooting.md) · [Sections](../_agent/sections/docs/troubleshooting/index.md)
+- [Webhooks | Overview](docs/webhooks.md) · [Sections](../_agent/sections/docs/webhooks/index.md)
+- [Workspace Integration Technical Details](docs/workspace-integration-technical-details.md) · [Sections](../_agent/sections/docs/workspace-integration-technical-details/index.md)

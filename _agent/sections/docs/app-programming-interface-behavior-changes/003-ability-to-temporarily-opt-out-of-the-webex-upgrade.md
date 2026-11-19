@@ -1,0 +1,31 @@
+---
+type: Excerpt
+canonical_url: https://developer.webex.com/docs/app-programming-interface-behavior-changes
+lane: production
+source_revision: cms-sha256:eef02d9689815c50a76fcf18add9b322a54bd5fd836885db6fc040057975c564
+publication_state: verified_published_snapshot
+heading_hierarchy:
+- Ability to temporarily opt out of the Webex upgrade
+context_status: requires_parent_review
+---
+
+> Documentation excerpt. Cite [the canonical article](https://developer.webex.com/docs/app-programming-interface-behavior-changes). [Full Markdown](../../../../docs/app-programming-interface-behavior-changes.md). Dependencies are not exhaustively verified; read the full article for cross-section procedures or missing context.
+
+## Article introduction
+
+This page highlights recent API behavior changes associated with the upgrade to the Webex Suite Meeting Platform.
+
+---
+
+Developers have reported unexpected changes in functionality, such as [join links](https://developer.webex.com/docs/api/v1/meetings/join-a-meeting) requiring authentication and the [meeting chats API](https://developer.webex.com/docs/api/v1/meeting-chats) not returning new results.
+
+If you encounter any of these issues, open a ticket with our [support team](mailto:devsupport@webex.com) so we can validate your environment and recommend the best path forward.
+
+These changes are a byproduct of the ongoing migration of customer sites to the Webex Suite Meeting Platform (WSMP).
+
+## Selected section
+
+## Ability to temporarily opt out of the Webex upgrade
+If necessary, we can temporarily revert your site to the previous backend until all the gaps have been addressed. If you require this option, please contact devsupport@webex.com, and your dedicated support representative will guide you through the process. To verify whether your system has been upgraded to the Webex Suite Meeting Platform, see the Webex Help Center article "About the Webex Suite meeting platform".
+
+Thank you for your understanding and patience as we work towards providing you with an improved API experience on the Webex Suite Meeting Platform. If you have any further questions or concerns, please do not hesitate to reach out to us.

@@ -1,0 +1,27 @@
+---
+type: Excerpt
+canonical_url: https://developer.webex.com/docs/create-your-own-bitbucket-server-bot-integrated-with-webex
+lane: production
+source_revision: cms-sha256:eef02d9689815c50a76fcf18add9b322a54bd5fd836885db6fc040057975c564
+publication_state: verified_published_snapshot
+heading_hierarchy:
+- Additional Resources
+context_status: requires_parent_review
+---
+
+> Documentation excerpt. Cite [the canonical article](https://developer.webex.com/docs/create-your-own-bitbucket-server-bot-integrated-with-webex). [Full Markdown](../../../../docs/create-your-own-bitbucket-server-bot-integrated-with-webex.md). Dependencies are not exhaustively verified; read the full article for cross-section procedures or missing context.
+
+Setup and context to read: [Prerequisites](001-prerequisites.md)
+
+## Article introduction
+
+This article explains how you can create your own Webex-integrated Bitbucket Server bot.
+
+## Selected section
+
+## Additional Resources
+
+For more information on Bitbucket Server and Webex, see:
+
+- **Bitbucket API Documentation**: [https://developers.wrike.com/overview/](https://developers.wrike.com/overview/)
+- **Webex API Documentation**: [https://developer.webex.com/docs](https://developer.webex.com/docs)

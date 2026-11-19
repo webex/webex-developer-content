@@ -1,0 +1,24 @@
+# Webex app-hub documentation
+
+> Verified published documentation snapshot. Cite each document's canonical_url. Duplicate category copies represent the same document.
+
+## Documents
+
+- [Security Guides | Admin Approval Guide](docs/admin-approval-guide-for-agentic-apps.md) · [Sections](../_agent/sections/docs/admin-approval-guide-for-agentic-apps/index.md)
+- [Agentic Apps | Submit to App Hub & Badging](docs/agentic-apps-app-hub.md) · [Sections](../_agent/sections/docs/agentic-apps-app-hub/index.md)
+- [Build for App Hub | Get Started](docs/app-hub-build-and-test.md) · [Sections](../_agent/sections/docs/app-hub-build-and-test/index.md)
+- [Plan Customer Setup and Authorization](docs/app-hub-customer-onboarding.md) · [Sections](../_agent/sections/docs/app-hub-customer-onboarding/index.md)
+- [App Hub Submission Checklist for Embedded Apps](docs/app-hub-submission-checklist-for-embedded-apps.md) · [Sections](../_agent/sections/docs/app-hub-submission-checklist-for-embedded-apps/index.md)
+- [Webex App Hub Submission Process](docs/app-hub-submission-process.md) · [Sections](../_agent/sections/docs/app-hub-submission-process/index.md)
+- [Become a BYOVA Provider on Webex App Hub](docs/become-a-byova-provider.md) · [Sections](../_agent/sections/docs/become-a-byova-provider/index.md)
+- [Bots](docs/bots.md) · [Sections](../_agent/sections/docs/bots/index.md)
+- [Build for App Hub | Overview](docs/build-for-app-hub.md) · [Sections](../_agent/sections/docs/build-for-app-hub/index.md)
+- [Choose Your App Hub App Type](docs/choose-your-app-hub-app-type.md) · [Sections](../_agent/sections/docs/choose-your-app-hub-app-type/index.md)
+- [Developer Sandbox](docs/developer-sandbox-guide.md) · [Sections](../_agent/sections/docs/developer-sandbox-guide/index.md)
+- [Embedded Apps Design and Experience Guidelines for Meetings](docs/embedded-apps-design-guidelines-for-meetings.md) · [Sections](../_agent/sections/docs/embedded-apps-design-guidelines-for-meetings/index.md)
+- [Embedded Apps Developer Guide](docs/embedded-apps-guide.md) · [Sections](../_agent/sections/docs/embedded-apps-guide/index.md)
+- [Manage Your Published App](docs/manage-your-published-app.md) · [Sections](../_agent/sections/docs/manage-your-published-app/index.md)
+- [Sandbox (Contact Center)](docs/sandbox_cc.md) · [Sections](../_agent/sections/docs/sandbox_cc/index.md)
+- [Using Webex Service Apps](docs/service-apps.md) · [Sections](../_agent/sections/docs/service-apps/index.md)
+- [Webex API and SDK Support Policy](docs/webex-api-and-sdk-support-policy.md) · [Sections](../_agent/sections/docs/webex-api-and-sdk-support-policy/index.md)
+- [Workspace Integrations | Overview](docs/workspace-integrations.md) · [Sections](../_agent/sections/docs/workspace-integrations/index.md)

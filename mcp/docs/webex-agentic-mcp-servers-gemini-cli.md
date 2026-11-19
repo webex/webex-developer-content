@@ -1,0 +1,92 @@
+---
+type: Guide
+title: Webex MCP Server Usage Guide | Gemini CLI
+display_title: Gemini CLI
+canonical_url: https://developer.webex.com/docs/webex-agentic-mcp-servers-gemini-cli
+content_type: documentation
+product_group:
+- webex-suite
+- webex-contact-center
+categories:
+- mcp
+---
+
+> Official Webex documentation: [View this page on Webex for Developers](https://developer.webex.com/docs/webex-agentic-mcp-servers-gemini-cli)
+
+---
+
+Connect Gemini CLI to a Webex MCP server.
+
+> Before configuring, you'll need OAuth 2.0 credentials. See [OAuth 2.0 setup instructions](https://developer.webex.com/docs/webex-agentic-mcp-servers#2-oauth-20) in the main guide.
+
+## OAuth 2.0
+
+To configure OAuth for an MCP server in the Gemini CLI, edit the `~/.gemini/settings.json` file, then use the `/mcp auth` command in the CLI to complete authentication through a web browser.
+
+### 1. Add the MCP server configuration to settings.json
+
+Open or create your Gemini CLI configuration file at `~/.gemini/settings.json`. Add an entry in the `mcpServers` block for your server:
+
+```javascript
+{
+  "mcpServers": {
+    "<server-name>": {
+      "url": "<MCP_SERVER_URL>",
+      "oauth": {
+        "enabled": true,
+        "clientId": "YOUR_CLIENT_ID",
+        "clientSecret": "YOUR_CLIENT_SECRET",
+        "authorizationUrl": "https://webexapis.com/v1/authorize",
+        "tokenUrl": "https://webexapis.com/v1/access_token",
+        "scopes": ["spark:mcp", "required_scope_1", "required_scope_2"]
+      }
+    }
+  }
+}
+```
+
+- `enabled` — Set to `true` to enable OAuth for the server
+- `clientId` and `clientSecret` — Your OAuth 2.0 client credentials from [your Webex OAuth 2.0 Integration](https://developer.webex.com/docs/webex-agentic-mcp-servers#2-oauth-20)
+- `authorizationUrl` and `tokenUrl` — The endpoints for the OAuth flow
+- `scopes` — An array of required OAuth scopes
+- `redirectUri` — Redirect URI will be in this format `http://localhost:<PORT>/oauth/callback`. PORT can be any available port. This needs to be added as the redirect URI in your Webex OAuth 2.0 Integration.
+
+### 2. Authenticate within the Gemini CLI
+
+After saving the `settings.json` file, restart the Gemini CLI and authenticate the server:
+
+1. Run `gemini` to start the CLI session
+2. Initiate the authentication flow:
+
+```sh
+/mcp auth <server-name>
+```
+
+This will open a browser window for you to sign in and grant access. The Gemini CLI stores the access and refresh tokens locally in `~/.gemini/mcp-oauth-tokens.json` for future use.
+
+## Verify
+
+In Gemini CLI, run `/mcp` to check connected servers.
+
+## Troubleshooting
+
+### MCP server is blocked
+
+If you see an error indicating that the MCP server is blocked, you need to add the server name to the `mcp.allowed` list in `~/.gemini/settings.json`:
+
+```javascript
+{
+  "mcp": {
+    "allowed": [
+      "your-server-name"
+    ],
+    "excluded": []
+  }
+}
+```
+
+Add the exact server name you used in `mcpServers` to the `allowed` array, then restart Gemini CLI.
+
+## Resources
+
+- [Gemini CLI Official Documentation](https://geminicli.com/docs/tools/mcp-server/)

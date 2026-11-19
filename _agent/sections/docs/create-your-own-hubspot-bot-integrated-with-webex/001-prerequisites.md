@@ -1,0 +1,26 @@
+---
+type: Excerpt
+canonical_url: https://developer.webex.com/docs/create-your-own-hubspot-bot-integrated-with-webex
+lane: production
+source_revision: cms-sha256:eef02d9689815c50a76fcf18add9b322a54bd5fd836885db6fc040057975c564
+publication_state: verified_published_snapshot
+heading_hierarchy:
+- Prerequisites
+context_status: requires_parent_review
+---
+
+> Documentation excerpt. Cite [the canonical article](https://developer.webex.com/docs/create-your-own-hubspot-bot-integrated-with-webex). [Full Markdown](../../../../docs/create-your-own-hubspot-bot-integrated-with-webex.md). Dependencies are not exhaustively verified; read the full article for cross-section procedures or missing context.
+
+## Article introduction
+
+This article explains how you can create your own Webex-integrated HubSpot bot.
+
+## Selected section
+
+## Prerequisites
+
+Before continuing, you will need access to a few developer resources and the Node.js framework:
+
+- **HubSpot Developer Account**: You'll need to apply for a developer account to get access to the APIs available in the HubSpot: [https://developers.hubspot.com/](https://developers.hubspot.com/).
+- **Cisco Webex Account**:&#xa0;You'll need a Webex developer account if you don’t have one already. You can create one on the Webex Developer Portal:&#xa0;[https://developer.webex.com/](https://developer.webex.com/).
+- **Node.js**: To create the Webex bot, you’ll be leveraging the Webex Node Bot framework. Make sure you’ve got [Node.js](https://nodejs.org/en/download) installed on your platform of choice.
