@@ -20,7 +20,7 @@ The production Developer Portal remains authoritative for this lane. This snapsh
 
 Excerpts retain the introduction, enclosing heading context, and reference definitions. Linked setup/context sections are heading-based discovery hints, not verified dependencies. Read them before using an excerpt; fetch the full article for cross-section procedures or uncertain prerequisites. Articles without at least two second-level headings use full-page retrieval. Full articles and category copies remain byte-identical to the normal export.
 
-This build exported 646 documents and excluded 14. It was generated from source revision `cms-sha256:eef02d9689815c50a76fcf18add9b322a54bd5fd836885db6fc040057975c564`.
+This build exported 646 documents and excluded 14. It was generated from source revision `cms-sha256:e1be19c5cbc77e0871ecf36471448c350db9c17483578e472467c7535beb1e5d`.
 
 ## Citation contract
 
