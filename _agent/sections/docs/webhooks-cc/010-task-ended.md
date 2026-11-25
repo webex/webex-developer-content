@@ -2,7 +2,7 @@
 type: Excerpt
 canonical_url: https://developer.webex.com/docs/webhooks-cc
 lane: production
-source_revision: cms-sha256:e1be19c5cbc77e0871ecf36471448c350db9c17483578e472467c7535beb1e5d
+source_revision: cms-sha256:2f7d0f095a5447b8875eb7a535ea7f1484e157f217bc658add8bbc1c2b4c50cd
 publication_state: verified_published_snapshot
 heading_hierarchy:
 - Tasks
@@ -26,7 +26,7 @@ Find Webex Contact Center webhook event types, resource versions, and event-spec
 
 ## Tasks
 
-The task resource represents a request or demand for work from agents. Concretely, a telephony task is an incoming call. Tasks are not considered complete until all parties have wrapped up, i.e., the customer has terminated communication and the agent has completed any summary/“wrap-up” work. Tasks are most commonly initiated by the customer (inbound), but can also be initiated by an agent (outbound). Presently, Task APIs are supported for telephony media only.
+The task resource represents a request or demand for work from agents. Concretely, a telephony task is an incoming call. Tasks are not considered complete until all parties have wrapped up, i.e., the customer has terminated communication and the agent has completed any summary/“wrap-up” work. Tasks are most commonly initiated by the customer (inbound), but can also be initiated by an agent (outbound). Task APIs support telephony. Custom Messaging and Work Item integrations use the Create Task API for inbound task creation and the Task Messages API for subsequent messages or metadata updates. See [Custom Messaging](https://developer.webex.com/docs/bring-your-own-custom-messaging-channel) and [Work Items](https://developer.webex.com/docs/task-routing-work-items) for the request formats and integration steps.
 
 | Resource | Event | Trigger | Resource version |
 | --- | --- | --- | --- |
@@ -38,8 +38,8 @@ The task resource represents a request or demand for work from agents. Concretel
 | `task` | [`task:consulting`](https://developer.webex.com/docs/webhooks-cc#task-consulting) | A task is being consulted with another Agent, while the Customer is currently on hold. | `task:1.0.0` |
 | `task` | [`task:ended`](https://developer.webex.com/docs/webhooks-cc#task-ended) | A task has ended either by the Agent or by the Customer. | `task:1.0.0` |
 | `task` | [`task:failed`](https://developer.webex.com/docs/webhooks-cc#task-failed) | A task operation has failed in the contact center. | `task:1.0.0` |
-| `task-message` | [`task-message:appended`](https://developer.webex.com/docs/webhooks-cc#task-message-appended) | An inbound message was appended to the task's conversation. | `task-message:1.0.0` |
-| `task-message` | [`task-message:append-failed`](https://developer.webex.com/docs/webhooks-cc#task-message-append-failed) | An inbound message could not be appended to the task's conversation. | `task-message:1.0.0` |
+| `task-message` | [`task-message:appended`](https://developer.webex.com/docs/webhooks-cc#task-message-appended) | An inbound message or Work Item metadata was appended to the task's conversation. | `task-message:1.0.0` |
+| `task-message` | [`task-message:append-failed`](https://developer.webex.com/docs/webhooks-cc#task-message-append-failed) | An inbound message or Work Item metadata failed to be appended to the task's conversation. | `task-message:1.0.0` |
 | `task` | [`task:hold-done`](https://developer.webex.com/docs/webhooks-cc#task-hold-done) | A task is currently resumed by the Agent. | `task:1.0.0` |
 | `task` | [`task:new`](https://developer.webex.com/docs/webhooks-cc#task-new) | A task is formed. | `task:1.0.0` |
 | `task` | [`task:on-hold`](https://developer.webex.com/docs/webhooks-cc#task-on-hold) | A task is currently on hold since the Agent has placed the Customer on hold. | `task:1.0.0` |
@@ -64,10 +64,10 @@ An event indicating that a task has ended either by the Agent or by the Customer
 | Field | Type | Description | Example |
 | --- | --- | --- | --- |
 | `taskId` | `string` | The ID associated with a specific interaction. | `"888b688e-b74e-4fa6-8260-1e8d0a3523a"` |
-| `origin` | `string` | Customer’s channel-specific identifier.<br />For telephony, this is the phone number.<br />For email and chat, this is the email address. | `"1+9****8095"` |
-| `destination` | `string` | Destination the customer contacted.<br />For telephony, this is the number the customer called.<br />For chat, this is the chat template name where the chat takes place.<br />For email, it is the email address contacted. | `"1+5****2001"` |
+| `origin` | `string` | Customer’s channel-specific identifier.<br />For telephony, this is the phone number.<br />For email and chat, this is the email address.<br />For Custom Messaging and Work Items, this is the customer or source-system identifier supplied in `origin.address`. | `"1+9****8095"` |
+| `destination` | `string` | Destination the customer contacted.<br />For telephony, this is the number the customer called.<br />For chat, this is the chat template name where the chat takes place.<br />For email, it is the email address contacted.<br />For Custom Messaging and Work Items, this is the business address configured on the asset. | `"1+5****2001"` |
 | `direction` | `string` | Indicates which party initiated the Task.<br />If **"INBOUND"**, it was initiated by the customer.<br />If **"OUTBOUND"**, it was initiated by the system or an agent. | `"INBOUND"` |
-| `channelType` | `string` | Indicates the channel type of a task. | `"telephony\|chat\|email\|social\|customMessaging"` |
+| `channelType` | `string` | Indicates the channel type of a task. | `"telephony\|chat\|email\|social\|customMessaging\|workItem"` |
 | `outboundType` | `string` | Indicates if the outbound task was an autodial, campaign, or callback. | `null` |
 | `terminatingParty` | `string` | Indicates which party ended the task. Can be an Agent or a Customer. | `"Customer\|Agent"` |
 | `reason` | `string` | Indicates the cause for a task to end. | `"Agent left\|Customer left"` |

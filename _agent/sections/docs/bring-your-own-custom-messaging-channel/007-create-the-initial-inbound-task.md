@@ -2,7 +2,7 @@
 type: Excerpt
 canonical_url: https://developer.webex.com/docs/bring-your-own-custom-messaging-channel
 lane: production
-source_revision: cms-sha256:e1be19c5cbc77e0871ecf36471448c350db9c17483578e472467c7535beb1e5d
+source_revision: cms-sha256:2f7d0f095a5447b8875eb7a535ea7f1484e157f217bc658add8bbc1c2b4c50cd
 publication_state: verified_published_snapshot
 heading_hierarchy:
 - Create The Initial Inbound Task
@@ -25,36 +25,40 @@ Use the [Create Task API](https://developer.webex.com/webex-contact-center/docs/
 
 For Custom Messaging, Create Task supports inbound task creation only. Outbound messages are sent later by flows or agents and are delivered to the middleware application through the configured webhook.
 
+Send the request to `POST /v2/tasks` using the following request body.
+
 Example request:
 
 ```json
 {
   "origin": {
-    "id": "customer@example.com",
+    "address": "customer@example.com",
+    "type": "customerAddress",
     "name": "Customer Name"
   },
   "destination": {
-    "id": "support@channel.biz",
+    "address": "support@channel.biz",
     "type": "businessAddress"
   },
-  "channelType": "customMessaging",
-  "channel": "my-custom-channel",
   "globalVariables": {
     "customerTier": "gold"
   },
-  "channelParams": {
-    "type": "text-with-attachments",
+  "channelProperties": {
+    "channelType": "customMessaging",
+    "channel": "my-custom-channel",
     "message": {
-      "aliasId": "90a896bc-5eb5-4d15-8e11-f62e99751c21",
+      "type": "text-with-attachments",
+      "direction": "inbound",
+      "aliasId": "80a896bc-5eb5-4d15-8e11-f62e99751c21",
       "text": "Hello, I need help with my order. Please see the attached screenshot.",
       "attachments": [
         {
           "fileName": "order-screenshot.png",
           "mimeType": "image/png",
-          "fileUrl": "https://cdn.partner.example.com/files/order-screenshot.png"
+          "url": "https://cdn.partner.example.com/files/order-screenshot.png"
         }
       ],
-      "timestamp": 1779785508649
+      "timestampEpoch": 1779785508649
     }
   }
 }
@@ -64,23 +68,41 @@ Important request fields:
 
 | Parameter | Description | Mandatory |
 | --- | --- | --- |
-| `origin.id` | Middleware-managed customer identifier | Yes |
-| `destination.id` | Business address configured on the asset | Yes |
+| `origin.address` | Middleware-managed customer address or identifier | Yes |
+| `origin.type` | Must be `customerAddress` | Yes |
+| `origin.name` | Customer display name | No |
+| `destination.address` | Business address configured on the asset | Yes |
+| `destination.type` | Must be `businessAddress` | Yes |
+| `channelProperties` | Channel details and initial message, described below | Yes |
+| `globalVariables` | Global variables for the interaction | No |
+| `flowSettings` | Flow settings supported by the Create Task API | No |
+
+Fields inside `channelProperties` (for example, `message.type` means `channelProperties.message.type`):
+
+| Field | Description | Mandatory |
+| --- | --- | --- |
 | `channelType` | Must be `customMessaging` | Yes |
 | `channel` | Configured Custom Messaging channel name | Yes |
-| `channelParams.type` | Message type, currently `text` or `text-with-attachments` | Yes |
-| `channelParams.message.aliasId` | Middleware message identifier | Yes |
-| `channelParams.message.text` | Customer message text | Yes |
-| `channelParams.message.attachments` | Attachment list for `text-with-attachments` | Conditional |
-| `channelParams.message.attachments[].fileName` | Middleware-provided file name | Conditional |
-| `channelParams.message.attachments[].mimeType` | Attachment media type | Conditional |
-| `channelParams.message.attachments[].fileUrl` | HTTPS URL that the platform can retrieve | Conditional |
-| `channelParams.message.timestamp` | Customer message timestamp in epoch milliseconds | Yes |
+| `message.type` | `text` or `text-with-attachments` | Yes |
+| `message.direction` | Must be lowercase `inbound` | Yes |
+| `message.aliasId` | Middleware message identifier; a supplied value need not be a UUID and supports up to 200 characters | No |
+| `message.text` | Customer message text, supplied as a string; see the rules below | Yes |
+| `message.attachments` | Attachment array required for `text-with-attachments`; omit for `text` | Conditional |
+| `message.attachments[].fileName` | Nonempty file name for each attachment | Conditional |
+| `message.attachments[].mimeType` | Attachment media type when supplied | No |
+| `message.attachments[].url` | HTTPS URL that Webex Contact Center can retrieve; maximum 2,000 characters | Conditional |
+| `message.timestampEpoch` | Customer message time as an integer in epoch milliseconds | Yes |
 
-Message type validation checks from the current routing model:
+The following message rules also apply to subsequent inbound messages sent through the Task Messages API:
 
-- `text`: Requires non-empty `text`. Attachments are not supported.
-- `text-with-attachments`: Includes `text` and `attachments`. The `attachments` field must be present. Empty text is accepted when attachment content is present. Each attachment entry requires `fileName`, `mimeType`, and HTTPS `fileUrl`.
+- For `type: "text"`, `text` must contain non-whitespace characters. Omit `attachments`; a supplied array, including `[]`, is rejected. An explicit `attachments: null` is treated like omission.
+- For `type: "text-with-attachments"`, `text` is required as a string and `attachments` is required as an array. Text may be empty (`""`) when at least one attachment is supplied. Blank text with an empty attachment array is rejected. Nonblank text with `attachments: []` is accepted.
+- For an attachment-only inbound message, use `type: "text-with-attachments"`, `text: ""` and a nonempty attachment array. Webex Contact Center supplies the fallback text `Here are your attachments`.
+- Each attachment requires `fileName` and HTTPS `url`. `mimeType` is optional; if supplied, it must be a string or null. Attachment content and configured file policies are still validated.
+- `aliasId` is optional. If it is omitted, null or empty, Webex Contact Center generates a message alias. See the correlation guidance under [Append Subsequent Inbound Messages](https://developer.webex.com/docs/bring-your-own-custom-messaging-channel#append-subsequent-inbound-messages).
+- `timestampEpoch` is required. Use an integer in epoch milliseconds, such as the result of JavaScript `Date.now()`; do not supply an ISO timestamp or epoch seconds in this input field.
+
+The Create Task API applies a limit to the complete request body, with a configurable default of 900,000 bytes. A request that exceeds the configured limit is rejected with HTTP 413.
 
 The guide shows one representative Custom Messaging example. For the full set of supported request combinations and validation rules, refer to the [Create Task API](https://developer.webex.com/webex-contact-center/docs/api/v1/tasks-call-control/create-task).
 
@@ -89,7 +111,7 @@ Example response:
 ```json
 {
   "meta": {
-    "orgId": "cb5901fb-ab66-4377-a7bc-5f0b21896952"
+    "orgId": "11111111-1111-4111-8111-111111111111"
   },
   "data": {
     "id": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7"
@@ -99,4 +121,4 @@ Example response:
 
 Use `data.id` as the created task identifier. The middleware application should retain this value for subsequent Task Messages API calls and to correlate later task lifecycle subscription webhooks for the interaction.
 
-A `201 Created` response acknowledges that the Create Task request was accepted, but it does not guarantee that the task was fully created successfully. Use `task:new` as the success acknowledgement and `task:failed` as the failure acknowledgement.
+A `202 Accepted` response acknowledges that the Create Task request was accepted, but it does not guarantee that the task was fully created successfully. Use `task:new` as the success acknowledgement and `task:failed` as the failure acknowledgement.

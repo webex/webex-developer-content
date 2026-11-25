@@ -2,7 +2,7 @@
 type: Excerpt
 canonical_url: https://developer.webex.com/docs/task-routing-work-items
 lane: production
-source_revision: cms-sha256:e1be19c5cbc77e0871ecf36471448c350db9c17483578e472467c7535beb1e5d
+source_revision: cms-sha256:2f7d0f095a5447b8875eb7a535ea7f1484e157f217bc658add8bbc1c2b4c50cd
 publication_state: verified_published_snapshot
 heading_hierarchy:
 - Before You Begin
@@ -13,13 +13,15 @@ context_status: requires_parent_review
 
 ## Article introduction
 
-Work Items enable external systems to inject non-conversational tasks into Webex Contact Center and can be orchestrated within Webex CC Flow Designer, routed, handled, monitored, and reported alongside other contact center channel interactions.
+Work Items enable external systems to inject **non-conversational tasks** into Webex Contact Center and can be orchestrated within Webex CC Flow Designer, routed, handled, monitored, and reported alongside other contact center channel interactions.
+
+---
+
+New
 
 **Note:** 
 - Work Items do NOT represent live messaging conversations for unsupported channels such as Viber, Instagram, third-party digital channel gateways, etc. A bring-your-own messaging channel should be used for such use cases.
 - Use Work Items specifically for backend or offline tasks such as CRM leads, claims, faxes, cases, purchase orders, or other work that needs contact center routing and agent handling without a customer messaging on the other side.
-
-Availability for Work Items is currently open for **BETA**. Contact your Cisco team to request access.
 
 ## Selected section
 
@@ -33,7 +35,7 @@ Before integrating, ensure that the administrator has configured the following i
 - A `Work Item Asset` with:
   - `Asset name` and `Description` (optional)
   - `Business address` - Work Item assets use a configured business address to resolve Create Task requests. The business address must be unique across Work Item assets.
-  - `Data schema fields` - Work Item schema configuration defines which metadata fields are accepted for the task. The configured schema can contain up to 50 fields. Each field key can contain up to 100 characters, and each field value can contain up to 1024 characters. At least one required field and one viewable field must be configured before a Work Item can be saved. These policies are enforced in the Create Task and Task Messages API. A schema field includes:
+  - `Data schema fields` - The schema defines the Work Item metadata fields. Configure at least one required field and one viewable field before saving the asset. API payload limits and the rules for creating and updating these fields are described under [Work Item schema behavior](https://developer.webex.com/docs/task-routing-work-items#work-item-schema-behavior). A schema field includes:
     - `Field key`
     - `Display name`
     - Whether the field is `required`

@@ -18,8 +18,6 @@ Connect an external messaging channel to Webex Contact Center through middleware
 
 New
 
-**This feature is currently in Beta. Contact your Cisco team if you want access to this feature.**
-
 In this model:
 
 - A middleware application owns the external messaging channel integration.
@@ -102,7 +100,9 @@ Messaging policies are configured on the Custom Messaging channel in Control Hub
 - Maximum single attachment size
 - Allowed file types
 
-If an inbound message violates the configured channel policy, the entire message is rejected rather than partially accepted.
+Message text and attachments must comply with your custom channel’s configured limits for text length, attachment count, allowed file types and file sizes. Applicable security policies also apply. The API enforces a maximum of 20,000 text characters and five attachments per message; lower configured limits take precedence.
+
+If an inbound message violates the configured channel policy, the entire message is rejected rather than partially accepted. Attachment drops during PCI or malware scanning are handled separately, as described in [Security, PCI, And Malware Handling](#security-pci-and-malware-handling).
 
 If administrators update the messaging policy, inbound middleware traffic starts using the updated policy almost immediately after the configuration change is applied. For outbound agent messaging, the updated policy is applied after the next relevant desktop reload or session refresh.
 
@@ -126,36 +126,40 @@ Use the [Create Task API](https://developer.webex.com/webex-contact-center/docs/
 
 For Custom Messaging, Create Task supports inbound task creation only. Outbound messages are sent later by flows or agents and are delivered to the middleware application through the configured webhook.
 
+Send the request to `POST /v2/tasks` using the following request body.
+
 Example request:
 
 ```json
 {
   "origin": {
-    "id": "customer@example.com",
+    "address": "customer@example.com",
+    "type": "customerAddress",
     "name": "Customer Name"
   },
   "destination": {
-    "id": "support@channel.biz",
+    "address": "support@channel.biz",
     "type": "businessAddress"
   },
-  "channelType": "customMessaging",
-  "channel": "my-custom-channel",
   "globalVariables": {
     "customerTier": "gold"
   },
-  "channelParams": {
-    "type": "text-with-attachments",
+  "channelProperties": {
+    "channelType": "customMessaging",
+    "channel": "my-custom-channel",
     "message": {
-      "aliasId": "90a896bc-5eb5-4d15-8e11-f62e99751c21",
+      "type": "text-with-attachments",
+      "direction": "inbound",
+      "aliasId": "80a896bc-5eb5-4d15-8e11-f62e99751c21",
       "text": "Hello, I need help with my order. Please see the attached screenshot.",
       "attachments": [
         {
           "fileName": "order-screenshot.png",
           "mimeType": "image/png",
-          "fileUrl": "https://cdn.partner.example.com/files/order-screenshot.png"
+          "url": "https://cdn.partner.example.com/files/order-screenshot.png"
         }
       ],
-      "timestamp": 1779785508649
+      "timestampEpoch": 1779785508649
     }
   }
 }
@@ -165,23 +169,41 @@ Important request fields:
 
 | Parameter | Description | Mandatory |
 | --- | --- | --- |
-| `origin.id` | Middleware-managed customer identifier | Yes |
-| `destination.id` | Business address configured on the asset | Yes |
+| `origin.address` | Middleware-managed customer address or identifier | Yes |
+| `origin.type` | Must be `customerAddress` | Yes |
+| `origin.name` | Customer display name | No |
+| `destination.address` | Business address configured on the asset | Yes |
+| `destination.type` | Must be `businessAddress` | Yes |
+| `channelProperties` | Channel details and initial message, described below | Yes |
+| `globalVariables` | Global variables for the interaction | No |
+| `flowSettings` | Flow settings supported by the Create Task API | No |
+
+Fields inside `channelProperties` (for example, `message.type` means `channelProperties.message.type`):
+
+| Field | Description | Mandatory |
+| --- | --- | --- |
 | `channelType` | Must be `customMessaging` | Yes |
 | `channel` | Configured Custom Messaging channel name | Yes |
-| `channelParams.type` | Message type, currently `text` or `text-with-attachments` | Yes |
-| `channelParams.message.aliasId` | Middleware message identifier | Yes |
-| `channelParams.message.text` | Customer message text | Yes |
-| `channelParams.message.attachments` | Attachment list for `text-with-attachments` | Conditional |
-| `channelParams.message.attachments[].fileName` | Middleware-provided file name | Conditional |
-| `channelParams.message.attachments[].mimeType` | Attachment media type | Conditional |
-| `channelParams.message.attachments[].fileUrl` | HTTPS URL that the platform can retrieve | Conditional |
-| `channelParams.message.timestamp` | Customer message timestamp in epoch milliseconds | Yes |
+| `message.type` | `text` or `text-with-attachments` | Yes |
+| `message.direction` | Must be lowercase `inbound` | Yes |
+| `message.aliasId` | Middleware message identifier; a supplied value need not be a UUID and supports up to 200 characters | No |
+| `message.text` | Customer message text, supplied as a string; see the rules below | Yes |
+| `message.attachments` | Attachment array required for `text-with-attachments`; omit for `text` | Conditional |
+| `message.attachments[].fileName` | Nonempty file name for each attachment | Conditional |
+| `message.attachments[].mimeType` | Attachment media type when supplied | No |
+| `message.attachments[].url` | HTTPS URL that Webex Contact Center can retrieve; maximum 2,000 characters | Conditional |
+| `message.timestampEpoch` | Customer message time as an integer in epoch milliseconds | Yes |
 
-Message type validation checks from the current routing model:
+The following message rules also apply to subsequent inbound messages sent through the Task Messages API:
 
-- `text`: Requires non-empty `text`. Attachments are not supported.
-- `text-with-attachments`: Includes `text` and `attachments`. The `attachments` field must be present. Empty text is accepted when attachment content is present. Each attachment entry requires `fileName`, `mimeType`, and HTTPS `fileUrl`.
+- For `type: "text"`, `text` must contain non-whitespace characters. Omit `attachments`; a supplied array, including `[]`, is rejected. An explicit `attachments: null` is treated like omission.
+- For `type: "text-with-attachments"`, `text` is required as a string and `attachments` is required as an array. Text may be empty (`""`) when at least one attachment is supplied. Blank text with an empty attachment array is rejected. Nonblank text with `attachments: []` is accepted.
+- For an attachment-only inbound message, use `type: "text-with-attachments"`, `text: ""` and a nonempty attachment array. Webex Contact Center supplies the fallback text `Here are your attachments`.
+- Each attachment requires `fileName` and HTTPS `url`. `mimeType` is optional; if supplied, it must be a string or null. Attachment content and configured file policies are still validated.
+- `aliasId` is optional. If it is omitted, null or empty, Webex Contact Center generates a message alias. See the correlation guidance under [Append Subsequent Inbound Messages](#append-subsequent-inbound-messages).
+- `timestampEpoch` is required. Use an integer in epoch milliseconds, such as the result of JavaScript `Date.now()`; do not supply an ISO timestamp or epoch seconds in this input field.
+
+The Create Task API applies a limit to the complete request body, with a configurable default of 900,000 bytes. A request that exceeds the configured limit is rejected with HTTP 413.
 
 The guide shows one representative Custom Messaging example. For the full set of supported request combinations and validation rules, refer to the [Create Task API](https://developer.webex.com/webex-contact-center/docs/api/v1/tasks-call-control/create-task).
 
@@ -190,7 +212,7 @@ Example response:
 ```json
 {
   "meta": {
-    "orgId": "cb5901fb-ab66-4377-a7bc-5f0b21896952"
+    "orgId": "11111111-1111-4111-8111-111111111111"
   },
   "data": {
     "id": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7"
@@ -200,7 +222,7 @@ Example response:
 
 Use `data.id` as the created task identifier. The middleware application should retain this value for subsequent Task Messages API calls and to correlate later task lifecycle subscription webhooks for the interaction.
 
-A `201 Created` response acknowledges that the Create Task request was accepted, but it does not guarantee that the task was fully created successfully. Use `task:new` as the success acknowledgement and `task:failed` as the failure acknowledgement.
+A `202 Accepted` response acknowledges that the Create Task request was accepted, but it does not guarantee that the task was fully created successfully. Use `task:new` as the success acknowledgement and `task:failed` as the failure acknowledgement.
 
 ## Subscribe To Task Lifecycle Events
 
@@ -222,44 +244,54 @@ Use the [Webhooks guide](https://developer.webex.com/docs/webhooks-cc) for detai
 
 Note that subscription-based `task-message:appended` and `task-message:append-failed` describe inbound task message flows. The outbound webhook documented in this guide is asset-configured and is not delivered through the Subscription API.
 
-Representative inbound `task-message:appended` subscription webhook:
+A successful initial message and a successful subsequent inbound append each produce a `task-message:appended` notification. The initial notification is separate from the task lifecycle event `task:new`. Inbound success notifications contain `channelProperties` with message metadata and security results when available; they omit message text and attachment objects.
+
+Representative inbound `task-message:appended` subscription webhook for a subsequent message:
 
 ```json
 {
-  "id": "4c2c4890-8a36-4dcc-9702-4c3a4aa1dc51",
+  "id": "90a896bc-5eb5-4d15-8e11-f62e99751c21",
   "specversion": "1.0",
   "type": "task-message:appended",
-  "source": "/com/cisco/wxcc/ed9357d0-3f5d-4c6a-a4fd-111111111111",
-  "comciscoorgid": "cb5901fb-ab66-4377-a7bc-5f0b21896952",
-  "comciscotimestamp": 1779785508649,
+  "source": "/com/cisco/wxcc/33333333-3333-4333-8333-333333333333",
+  "comciscoorgid": "11111111-1111-4111-8111-111111111111",
+  "comciscotimestamp": 1779785569049,
   "datacontenttype": "application/json",
   "data": {
     "taskId": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7",
     "direction": "INBOUND",
-    "messageDirection": "INBOUND",
     "channelType": "customMessaging",
     "channel": "my-custom-channel",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "createdTime": 1779785508649,
+    "createdTime": 1779785568999,
     "eventDetails": "Appended Message to chat successfully.",
-    "channelParams": {
-      "type": "text-with-attachments",
+    "channelProperties": {
+      "channel": "my-custom-channel",
+      "channelType": "customMessaging",
       "message": {
+        "messageId": "22222222-2222-4222-8222-222222222222",
         "aliasId": "90a896bc-5eb5-4d15-8e11-f62e99751c21",
-        "text": "I have more details to share about my order. Please see the attached invoice.",
-        "timestamp": 1779785508649,
-        "attachments": [
-          {
-            "fileName": "invoice.pdf",
-            "mimeType": "application/pdf",
-            "fileUrl": "https://cdn.partner.example.com/files/invoice.pdf"
-          }
-        ]
+        "direction": "inbound",
+        "type": "text-with-attachments",
+        "timestamp": "2026-05-26T08:52:48.649Z",
+        "timestampEpoch": 1779785568649
+      },
+      "securityComplianceInfo": {
+        "droppedAttachmentCount": 0,
+        "malwareScan": {
+          "isCompliant": true,
+          "droppedAttachmentCount": 0,
+          "validationDone": true
+        },
+        "pciScan": {
+          "isCompliant": true,
+          "textRedacted": false,
+          "validationDone": true,
+          "droppedAttachmentCount": 0
+        }
       }
-    },
-    "reason": null,
-    "errorMessage": null
+    }
   }
 }
 ```
@@ -271,20 +303,19 @@ Representative `task:failed` subscription webhook:
   "id": "8be34eb4-d64f-4552-96cc-c9b6e73063c2",
   "specversion": "1.0",
   "type": "task:failed",
-  "source": "/com/cisco/wxcc/ed9357d0-3f5d-4c6a-a4fd-222222222222",
-  "comciscoorgid": "cb5901fb-ab66-4377-a7bc-5f0b21896952",
-  "comciscotimestamp": 1779785508649,
+  "source": "/com/cisco/wxcc/33333333-3333-4333-8333-333333333333",
+  "comciscoorgid": "11111111-1111-4111-8111-111111111111",
+  "comciscotimestamp": "1779785508649",
   "datacontenttype": "application/json",
   "data": {
     "taskId": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "direction": "INBOUND",
+    "direction": "inbound",
     "channel": "my-custom-channel",
     "channelType": "customMessaging",
-    "mediaMgr": "digitalmm",
     "reason": "CONVERSATION_ALREADY_OPEN",
-    "errorMessage": "Conversation is already open with task id ab4ea619-a1ad-33a3-aed9-c2563a9bd6cc",
+    "errorMessage": "Active task already exists for the specified origin and destination, cannot create duplicate task. Open task id: ab4ea619-a1ad-43a3-aed9-c2563a9bd6cc.",
     "failureType": "failed",
     "createdTime": 1779785508649
   }
@@ -298,31 +329,30 @@ Common cases that can result in `task:failed` include:
 - `FEATURE_FLAG_DISABLED`: the organization is not enabled for Custom Messaging
 - `ENTRY_POINT_NOT_FOUND`: the asset does not resolve to an active entry point
 - `ORG_DIGITAL_CONTACT_LIMIT_EXCEEDED`: the organization has reached its active digital contact limit
-- `CONVERSATION_CREATION_FAILED`: downstream conversation creation failed after the request was accepted
-- Validation or policy failures, such as unsupported content, unsupported file types, attachment count limits, or attachment size limits
+- `INVALID_CONTENT`: message validation or policy failed, such as unsupported content, unsupported file types, attachment count limits, or attachment size limits
+- `INTERNAL_ERROR`: an unexpected failure prevented task creation
 
-Representative `task-message:append-failed` subscription webhook:
+Some validation or access failures are returned directly in the HTTP response before a task request is accepted. They do not necessarily produce a `task:failed` event.
+
+Representative `task-message:append-failed` subscription webhook for a request that exceeds the configured attachment count:
 
 ```json
 {
   "id": "64ab4f4a-5c93-4339-b325-3878f289a88f",
   "specversion": "1.0",
   "type": "task-message:append-failed",
-  "source": "/com/cisco/wxcc/ed9357d0-3f5d-4c6a-a4fd-333333333333",
-  "comciscoorgid": "cb5901fb-ab66-4377-a7bc-5f0b21896952",
-  "comciscotimestamp": 1779785508649,
+  "source": "/com/cisco/wxcc/33333333-3333-4333-8333-333333333333",
+  "comciscoorgid": "11111111-1111-4111-8111-111111111111",
+  "comciscotimestamp": 1779785569049,
   "datacontenttype": "application/json",
   "data": {
     "taskId": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7",
     "direction": "INBOUND",
-    "messageDirection": "INBOUND",
     "channelType": "customMessaging",
     "channel": "my-custom-channel",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "createdTime": 1779785508649,
-    "eventDetails": null,
-    "channelParams": null,
+    "createdTime": 1779785568999,
     "reason": "INVALID_CONTENT",
     "errorMessage": "The maximum number of attachments allowed is 1."
   }
@@ -332,32 +362,42 @@ Representative `task-message:append-failed` subscription webhook:
 Use the following fields to correlate inbound message webhook processing:
 
 - `data.taskId`: task identifier
-- `data.channelParams.message.aliasId`: middleware message identifier for `task-message:appended` (when `channelParams` is present)
-- `data.messageDirection`: direction of the appended message
-- `id`: webhook event identifier
+- `id`: UUID identifying the notification; for an ordinary append, correlate it with the Task Messages response `data.id`
+- `data.channelProperties.message.aliasId`: the supplied or generated message alias, when properties are present
+- `data.channelProperties.message.messageId`: Webex message identifier, separate from the alias and notification ID
+- `data.direction`: direction of the task
+- `data.channelProperties.message.direction`: direction of the message, when properties are present
+
+For the task-message notifications shown here, `data.direction` is `INBOUND`. Nested message direction uses lowercase `inbound` for customer messages and `outbound` for agent or Flow messages. An outbound reply does not change the task direction.
+
+`task-message:append-failed` contains error metadata without `channelProperties`; use its `id` and `data.taskId` for correlation. For inbound task-message success and failure notifications, `data.createdTime` is the notification creation time. Use `message.timestampEpoch` for the original message time when message metadata is present. Returned messages can contain both an ISO `timestamp` and its epoch-millisecond `timestampEpoch`.
 
 ## Append Subsequent Inbound Messages
 
 Use the [Task Messages API](https://developer.webex.com/webex-contact-center/docs/api/v1/tasks-call-control/append-task-message) to append subsequent inbound customer messages to the same task.
 
+Send the request to `POST /v2/tasks/{taskId}/messages`, using the task ID returned by Create Task. Include the channel type, channel name and message under `channelProperties`, as shown below. The task ID in the URL identifies the task receiving the message.
+
 Example request:
 
 ```json
 {
-  "mediaType": "customMessaging",
-  "channelParams": {
-    "type": "text-with-attachments",
+  "channelProperties": {
+    "channelType": "customMessaging",
+    "channel": "my-custom-channel",
     "message": {
+      "type": "text-with-attachments",
+      "direction": "inbound",
       "aliasId": "90a896bc-5eb5-4d15-8e11-f62e99751c21",
       "text": "I have more details to share. Please see the attached invoice.",
       "attachments": [
         {
           "fileName": "invoice.pdf",
           "mimeType": "application/pdf",
-          "fileUrl": "https://cdn.partner.example.com/files/invoice.pdf"
+          "url": "https://cdn.partner.example.com/files/invoice.pdf"
         }
       ],
-      "timestamp": 1779785508649
+      "timestampEpoch": 1779785568649
     }
   }
 }
@@ -368,7 +408,7 @@ Example response:
 ```json
 {
   "meta": {
-    "orgId": "cb5901fb-ab66-4377-a7bc-5f0b21896952"
+    "orgId": "11111111-1111-4111-8111-111111111111"
   },
   "data": {
     "id": "90a896bc-5eb5-4d15-8e11-f62e99751c21"
@@ -376,35 +416,59 @@ Example response:
 }
 ```
 
-Use `data.id` as the append event correlation identifier. If request `aliasId` is a valid UUID, the platform reuses that value as the event identifier.
+A `202 Accepted` response acknowledges submission, not completion of the append. Use `data.id` to correlate the later `task-message:appended` or `task-message:append-failed` notification. Unlike the Create Task response, this `data.id` identifies the append event, not the task.
+
+The following table shows how the `message.aliasId` supplied in a Task Messages request affects the response and notification identifiers. It also shows whether the alias in a successful notification is preserved or generated.
+
+| Request `message.aliasId` | Task Messages response `data.id` and subsequent notification `id` | Successful notification `message.aliasId` |
+| --- | --- | --- |
+| UUID string | The supplied UUID | The supplied alias |
+| Non-UUID string, such as `partner-message-002` | A separately generated UUID | The supplied alias |
+| Omitted, null or empty | A separately generated UUID | A generated message alias |
+
+Do not assume that the notification `id`, `message.aliasId` and `message.messageId` always have the same value.
 
 After a successful append, Webex Contact Center publishes the inbound `task-message:appended` subscription webhook for the same message, and the detailed event payload is documented in [Webhook Event Details](https://developer.webex.com/docs/webhooks-cc).
 
-Important request fields:
+Important request fields inside `channelProperties` (for example, `message.type` means `channelProperties.message.type`):
 
-| Parameter | Description | Mandatory |
+| Field | Description | Mandatory |
 | --- | --- | --- |
-| `mediaType` | Must be `customMessaging` | Yes |
-| `channelParams.type` | Message payload type, such as `text` or `text-with-attachments` | Yes |
-| `channelParams.message.aliasId` | Middleware message identifier for correlation | Yes |
-| `channelParams.message.text` | Customer message text | Yes |
-| `channelParams.message.attachments` | Attachment list used with `text-with-attachments` | Conditional |
-| `channelParams.message.attachments[].fileName` | Middleware-provided file name | Conditional |
-| `channelParams.message.attachments[].mimeType` | Attachment media type | Conditional |
-| `channelParams.message.attachments[].fileUrl` | HTTPS URL that the platform can retrieve | Conditional |
-| `channelParams.message.timestamp` | Customer message timestamp in epoch milliseconds | Yes |
+| `channelType` | Must be `customMessaging`, matching the task created earlier | Yes |
+| `channel` | Channel specified in the Create Task request | Yes |
+| `message.type` | `text` or `text-with-attachments` | Yes |
+| `message.direction` | Must be lowercase `inbound` | Yes |
+| `message.aliasId` | Optional middleware message identifier, up to 200 characters | No |
+| `message.text` | Customer message text as a string | Yes |
+| `message.attachments` | Attachment array required for `text-with-attachments`; omit for `text` | Conditional |
+| `message.attachments[].fileName` | Nonempty file name for each attachment | Conditional |
+| `message.attachments[].mimeType` | Attachment media type when supplied | No |
+| `message.attachments[].url` | Retrievable HTTPS attachment URL; maximum 2,000 characters | Conditional |
+| `message.timestampEpoch` | Customer message time as an integer in epoch milliseconds | Yes |
+
+The message and attachment rules under [Create The Initial Inbound Task](#create-the-initial-inbound-task) also apply here. The compact UTF-8 representation of `channelProperties` must not exceed 900,000 bytes, including any fallback text added for an attachment-only message. This measures the JSON object, not the downloaded attachment contents.
+
+The channel type and channel must match those used to create the task. A mismatch can be detected after HTTP acceptance and reported through `task-message:append-failed` with reason `INVALID_CONTENT`.
 
 Common inbound append failure categories surfaced through `task-message:append-failed` are shown below, and the detailed event payload is documented in [Webhook Event Details](https://developer.webex.com/docs/webhooks-cc):
 
 | Failure reason | Typical meaning | Typical next step |
 | --- | --- | --- |
-| `INVALID_CONTENT` | The request payload violates message policy or validation rules, such as unsupported content, unsupported file type, too many attachments, or attachment size limits. | Correct the request payload and retry. |
+| `INVALID_CONTENT` | The payload violates message policy or validation rules, or its channel/channel type does not match the task. | Correct the payload to match the channel used in Create Task and its messaging policies, then retry. |
 | `NOT_FOUND` | The referenced task context could not be found. | Verify the task identifier before retrying. |
 | `INTERNAL_ERROR` | The platform could not complete the append because of an unexpected internal failure. | Investigate the related failure event and retry. |
+
+### Retry Guidance
+
+Assign a UUID to `channelProperties.message.aliasId` for each logical message and reuse that UUID if the same request needs to be retried. Use a different UUID for each new message. If you retry with the same UUID `aliasId`, the platform reuses that UUID as the API response `data.id` and the corresponding notification `id`. If `aliasId` is omitted, null, empty or not a UUID, the platform generates a new event ID for every request, including retries.
+
+After `202 Accepted`, wait for the matching `task-message:appended` or `task-message:append-failed` notification before deciding whether to retry.
 
 ## Receive Outbound Partner Webhooks
 
 After the task is created, the associated flow can send outbound messages to the customer. After the task is connected to an agent, the agent can also send outbound messages. All outbound Custom Messaging messages are delivered to the middleware application through the asset-level webhook URL configured on the Control Hub asset.
+
+Outbound webhooks use `data.channelProperties` and contain the message content, accepted attachments and security results when available. For an inbound task, `data.direction` remains `INBOUND` while `data.channelProperties.message.direction` is `outbound`.
 
 Representative system-sent (flow-sent) outbound `task-message:appended` webhook:
 
@@ -413,28 +477,47 @@ Representative system-sent (flow-sent) outbound `task-message:appended` webhook:
   "id": "01de1010-a89c-4f3f-9dc1-9497164d3268",
   "specversion": "1.0",
   "type": "task-message:appended",
-  "source": "/com/cisco/wxcc/15858e1d-5059-45fd-aee1-fc314c42a790",
-  "comciscoorgid": "cb5901fb-ab66-4377-a7bc-5f0b21896952",
-  "comciscotimestamp": 1779785486332,
+  "source": "/com/cisco/wxcc/33333333-3333-4333-8333-333333333333",
+  "comciscoorgid": "11111111-1111-4111-8111-111111111111",
+  "comciscotimestamp": 1779785518899,
   "datacontenttype": "application/json",
   "data": {
     "taskId": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "messageDirection": "OUTBOUND",
     "senderType": "system",
     "channelType": "customMessaging",
     "channel": "my-custom-channel",
-    "channelParams": {
-      "type": "text",
+    "createdTime": 1779785518649,
+    "direction": "INBOUND",
+    "channelProperties": {
+      "channelType": "customMessaging",
+      "channel": "my-custom-channel",
       "message": {
+        "messageId": "44444444-4444-4444-8444-444444444444",
         "aliasId": "4690d7d9-b1a7-4e5b-9568-ca867a26eb49",
+        "direction": "outbound",
+        "type": "text",
         "text": "Thanks for contacting support. Please share your order number so we can help further.",
-        "timestamp": 1779760284456,
-        "attachments": []
+        "attachments": [],
+        "timestamp": "2026-05-26T08:51:58.649Z",
+        "timestampEpoch": 1779785518649
+      },
+      "securityComplianceInfo": {
+        "droppedAttachmentCount": 0,
+        "malwareScan": {
+          "isCompliant": true,
+          "droppedAttachmentCount": 0,
+          "validationDone": false
+        },
+        "pciScan": {
+          "isCompliant": true,
+          "textRedacted": false,
+          "validationDone": true,
+          "droppedAttachmentCount": 0
+        }
       }
-    },
-    "createdTime": 1779760284456
+    }
   }
 }
 ```
@@ -446,69 +529,110 @@ Representative agent-sent outbound `task-message:appended` webhook:
   "id": "11de1010-a89c-4f3f-9dc1-9497164d3268",
   "specversion": "1.0",
   "type": "task-message:appended",
-  "source": "/com/cisco/wxcc/15858e1d-5059-45fd-aee1-fc314c42a790",
-  "comciscoorgid": "cb5901fb-ab66-4377-a7bc-5f0b21896952",
-  "comciscotimestamp": 1779785586332,
+  "source": "/com/cisco/wxcc/33333333-3333-4333-8333-333333333333",
+  "comciscoorgid": "11111111-1111-4111-8111-111111111111",
+  "comciscotimestamp": 1779785588899,
   "datacontenttype": "application/json",
   "data": {
     "taskId": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "messageDirection": "OUTBOUND",
     "senderType": "agent",
     "senderId": "5f2ecb3f-1a83-41a9-9b70-c3f8b53b25a0",
     "channelType": "customMessaging",
     "channel": "my-custom-channel",
-    "channelParams": {
-      "type": "text",
+    "createdTime": 1779785588649,
+    "direction": "INBOUND",
+    "channelProperties": {
+      "channelType": "customMessaging",
+      "channel": "my-custom-channel",
       "message": {
+        "messageId": "55555555-5555-4555-8555-555555555555",
         "aliasId": "5690d7d9-b1a7-4e5b-9568-ca867a26eb49",
+        "direction": "outbound",
+        "type": "text",
         "text": "Hello, I am reviewing your request now. I will update you in a moment.",
-        "timestamp": 1779785586332,
-        "attachments": []
+        "attachments": [],
+        "timestamp": "2026-05-26T08:53:08.649Z",
+        "timestampEpoch": 1779785588649
+      },
+      "securityComplianceInfo": {
+        "droppedAttachmentCount": 0,
+        "malwareScan": {
+          "isCompliant": true,
+          "droppedAttachmentCount": 0,
+          "validationDone": true
+        },
+        "pciScan": {
+          "isCompliant": true,
+          "textRedacted": false,
+          "validationDone": true,
+          "droppedAttachmentCount": 0
+        }
       }
-    },
-    "createdTime": 1779785586332
+    }
   }
 }
 ```
 
-Representative agent-sent outbound `task-message:appended` webhook with attachments:
+Representative agent-sent outbound `task-message:appended` webhook with attachments and attachment encryption disabled:
 
 ```json
 {
   "id": "13cfff3d-8f88-4a49-90b9-9d49410abc54",
   "specversion": "1.0",
   "type": "task-message:appended",
-  "source": "/com/cisco/wxcc/15858e1d-5059-45fd-aee1-fc314c42a790",
-  "comciscoorgid": "cb5901fb-ab66-4377-a7bc-5f0b21896952",
-  "comciscotimestamp": 1779786678879,
+  "source": "/com/cisco/wxcc/33333333-3333-4333-8333-333333333333",
+  "comciscoorgid": "11111111-1111-4111-8111-111111111111",
+  "comciscotimestamp": 1779785608899,
   "datacontenttype": "application/json",
   "data": {
     "taskId": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "messageDirection": "OUTBOUND",
     "senderType": "agent",
     "senderId": "5f2ecb3f-1a83-41a9-9b70-c3f8b53b25a0",
     "channelType": "customMessaging",
     "channel": "my-custom-channel",
-    "channelParams": {
-      "type": "text-with-attachments",
+    "createdTime": 1779785608649,
+    "direction": "INBOUND",
+    "channelProperties": {
+      "channelType": "customMessaging",
+      "channel": "my-custom-channel",
       "message": {
+        "messageId": "88888888-8888-4888-8888-888888888888",
         "aliasId": "e5474344-4cab-4f9b-920e-1890117f9c10",
+        "direction": "outbound",
+        "type": "text-with-attachments",
         "text": "I am sharing the requested document.",
-        "timestamp": 1779786678831,
         "attachments": [
           {
-            "url": "https://attachment-api.example.com/api/v1/attachments/87da5468-9e09-49db-883e-dce1e8d62fac?token=<signed-url-token>",
+            "url": "https://attachment-api.example.com/files/order-details.pdf",
             "mimeType": "application/pdf",
-            "fileName": "order-details.pdf"
+            "fileName": "order-details.pdf",
+            "encrypted": false,
+            "fileSize": 4096,
+            "dropped": false
           }
-        ]
+        ],
+        "timestamp": "2026-05-26T08:53:28.649Z",
+        "timestampEpoch": 1779785608649
+      },
+      "securityComplianceInfo": {
+        "droppedAttachmentCount": 0,
+        "malwareScan": {
+          "isCompliant": true,
+          "droppedAttachmentCount": 0,
+          "validationDone": true
+        },
+        "pciScan": {
+          "isCompliant": true,
+          "textRedacted": false,
+          "validationDone": true,
+          "droppedAttachmentCount": 0
+        }
       }
-    },
-    "createdTime": 1779786678831
+    }
   }
 }
 ```
@@ -517,14 +641,24 @@ Important webhook fields:
 
 | Field | Description |
 | --- | --- |
-| `id` | Webhook event identifier |
+| `id` | UUID identifying this outbound notification; do not treat it as the message ID |
 | `data.taskId` | Task identifier for the interaction |
-| `data.messageDirection` | `OUTBOUND` for outbound delivery to the middleware application |
+| `data.direction` | Direction of the task; `INBOUND` for these customer-created tasks, including outbound replies |
 | `data.senderType` | `system` for flow/system messages or `agent` for agent-sent messages |
 | `data.senderId` | Present for agent-sent outbound messages |
-| `data.channelParams.type` | Outbound message payload type such as `text` or `text-with-attachments` |
-| `data.channelParams.message.aliasId` | Message identifier |
-| `data.channelParams.message.attachments` | Present when the outbound message includes files |
+| `data.channelProperties.channelType` | `customMessaging` |
+| `data.channelProperties.channel` | Configured Custom Messaging channel name |
+| `data.channelProperties.message.direction` | `outbound` for delivery to the middleware application |
+| `data.channelProperties.message.type` | `text`, `text-with-attachments`, or `attachments` for attachment-only agent messages |
+| `data.channelProperties.message.messageId` | Webex message identifier |
+| `data.channelProperties.message.aliasId` | Message alias, separate from the Webex message ID and notification ID |
+| `data.channelProperties.message.timestamp` | Message time in ISO format |
+| `data.channelProperties.message.timestampEpoch` | Message time in epoch milliseconds |
+| `data.channelProperties.message.attachments` | Accepted attachment objects when the message includes files |
+| `data.channelProperties.message.attachments[].encrypted` | Whether this attachment is encrypted |
+| `data.channelProperties.message.attachments[].dropped` | `false` for an accepted attachment |
+| `data.channelProperties.message.attachments[].fileSize` | File size in bytes, when supplied |
+| `data.channelProperties.securityComplianceInfo` | Security scan and redaction results, when available |
 
 For generic webhook signature, timestamp, replay-protection, and version-header handling, refer to [Using Webhooks](https://developer.webex.com/docs/using-webhooks).
 
@@ -539,7 +673,7 @@ Outbound attachment URLs depend on the organization’s attachment-encryption co
 - When attachment encryption is enabled, outbound attachment URLs point to encrypted attachment content
 - Otherwise, URLs pointing to plain attachments are returned
 
-When attachment encryption is enabled, the middleware application must use the Webex Decryption SDK to decrypt those attachments before further processing. For the decryption workflow and SDK steps, refer to the `Decrypting Attachments` section in the [Guide for Digital Transcripts](https://developer.webex.com/docs/guide-for-digital-transcripts).
+Use each attachment’s `encrypted` flag to determine whether decryption is required. For encrypted attachments, the middleware application must use the Webex Decryption SDK before further processing. For the decryption workflow and SDK steps, refer to the `Decrypting Attachments` section in the [Guide for Digital Transcripts](https://developer.webex.com/docs/guide-for-digital-transcripts).
 
 If outbound delivery fails internally, there is no equivalent outbound webhook failure event unless future implementation changes introduce one.
 
@@ -553,13 +687,12 @@ These requirements apply to middleware-provided attachment URLs used by:
 
 Requirements:
 
-- The attachment URL must use `https`
-- The attachment URL must be retrievable by the platform
-- File type is resolved from the URL extension when present
-- If the URL has no usable extension, the platform uses the provided filename as the fallback
-- If the effective file type is unsupported, the message is rejected
-- File size must be determinable from remote metadata such as `Content-Length`
-- If file size cannot be determined reliably, the message is rejected
+- Supply the attachment URL in the JSON key `url`; it must use `https` and be at most 2,000 characters long
+- The service must be able to download the file directly, without a separate login or Authorization header. A signed or short-lived URL is acceptable if it remains valid until the file is downloaded
+- Supply a nonempty `fileName`. `mimeType` is optional; omitting it does not bypass file-type or content validation
+- File-type validation uses the URL extension when present. If no usable extension is present, it can use the filename and content type returned by the file server, together with the supplied MIME type when applicable
+- If the effective file type is unsupported by the configured channel policy, the message is rejected
+- When the configured policy enforces attachment size limits, file size must be determinable from remote metadata such as `Content-Length`; otherwise, the message is rejected
 
 These rules are separate from agent desktop attachment uploads, which follow a different UI-driven validation path.
 
@@ -571,66 +704,101 @@ For message content handling:
 
 - PCI-sensitive text is masked and processing continues
 - For inbound create-task and inbound task-message flows, attachments that fail PCI or malware scanning are dropped while the message continues
-- Inbound success payloads include `eventDetails` when some attachments were dropped
-- Outbound middleware webhooks contain only the surviving attachments and do not explicitly list the dropped attachments
+- Inbound success payloads can include an `eventDetails` summary; use `channelProperties.securityComplianceInfo` for structured scan and redaction results
+- Inbound middleware webhooks contain message metadata and security results without text or attachment objects. Validated content is available to the flow through Start and Receive nodes.
+- Outbound middleware webhooks contain the surviving attachments. Dropped filenames and failure details can be reported separately in the security results
 - Agent outbound attachment uploads are blocked before send when the file violates the enforced data security policy
 
-Representative inbound success payload with masked PCI text:
+`securityComplianceInfo` can include a total `droppedAttachmentCount`, `malwareScan` and `pciScan`. Read `validationDone` together with `isCompliant`; `pciScan.textRedacted` indicates text masking. Scan `files` arrays can identify affected files using `name`, `errorCode` and `errorMsg`. Availability depends on the checks performed.
+
+Representative inbound success notification data indicating that PCI text was masked. The notification omits the text itself:
 
 ```json
 {
   "data": {
     "taskId": "5bf807cb-8f35-4f40-8261-1e2d05d41123",
     "direction": "INBOUND",
-    "messageDirection": "INBOUND",
     "channelType": "customMessaging",
     "channel": "my-custom-channel",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "createdTime": 1780295173809,
-    "eventDetails": "Chat Created Successfully",
-    "channelParams": {
-      "type": "text-with-attachments",
+    "createdTime": 1780295174159,
+    "eventDetails": "Chat Created Successfully.",
+    "channelProperties": {
+      "channel": "my-custom-channel",
+      "channelType": "customMessaging",
       "message": {
+        "messageId": "66666666-6666-4666-8666-666666666666",
         "aliasId": "cd0857f0-6b07-4e57-b821-9ae04b7f8bc8",
-        "text": "Hey need help with XXXX XXXX XXXX XXXX",
-        "attachments": [],
-        "timestamp": 1780295173809
+        "direction": "inbound",
+        "type": "text-with-attachments",
+        "timestamp": "2026-06-01T06:26:13.809Z",
+        "timestampEpoch": 1780295173809
+      },
+      "securityComplianceInfo": {
+        "droppedAttachmentCount": 0,
+        "malwareScan": {
+          "isCompliant": true,
+          "droppedAttachmentCount": 0,
+          "validationDone": false
+        },
+        "pciScan": {
+          "isCompliant": false,
+          "textRedacted": true,
+          "validationDone": true,
+          "droppedAttachmentCount": 0
+        }
       }
-    },
-    "reason": null,
-    "errorMessage": null
+    }
   }
 }
 ```
 
-Representative inbound success payload when PCI or malware scanning drops some attachments:
+Representative inbound success notification data when malware scanning drops an attachment. The security results identify the dropped file; the notification does not contain attachment objects:
 
 ```json
 {
   "data": {
     "taskId": "5bf807cb-8f35-4f40-8261-1e2d05d41123",
     "direction": "INBOUND",
-    "messageDirection": "INBOUND",
     "channelType": "customMessaging",
     "channel": "my-custom-channel",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "createdTime": 1780300207453,
-    "eventDetails": "Appended Message to chat successfully. PCI or malware scan failed for some attachments. Affected attachments were dropped.",
-    "channelParams": {
-      "type": "text-with-attachments",
+    "createdTime": 1780300207803,
+    "eventDetails": "Appended Message to chat successfully. Some attachments were dropped.",
+    "channelProperties": {
+      "channel": "my-custom-channel",
+      "channelType": "customMessaging",
       "message": {
+        "messageId": "77777777-7777-4777-8777-777777777777",
         "aliasId": "4a5a6865-feb6-49c3-a966-d493eccd0cf1",
-        "text": "My card XXXX XXXX XXXX XXXX",
-        "attachments": [
-          {
-            "fileName": "basicText.txt",
-            "mimeType": "text/plain",
-            "fileUrl": "https://cdn.partner.example.com/files/basicText.txt"
-          }
-        ],
-        "timestamp": 1780300207453
+        "direction": "inbound",
+        "type": "text-with-attachments",
+        "timestamp": "2026-06-01T07:50:07.453Z",
+        "timestampEpoch": 1780300207453
+      },
+      "securityComplianceInfo": {
+        "droppedAttachmentCount": 1,
+        "malwareScan": {
+          "isCompliant": false,
+          "droppedAttachmentCount": 1,
+          "validationDone": true,
+          "files": [
+            {
+              "name": "blocked-file.pdf",
+              "errorCode": "MALWARE_DETECTED",
+              "errorMsg": "Malware was detected"
+            }
+          ]
+        },
+        "pciScan": {
+          "isCompliant": true,
+          "textRedacted": false,
+          "validationDone": true,
+          "droppedAttachmentCount": 0,
+          "files": []
+        }
       }
     }
   }
@@ -646,11 +814,14 @@ Important guidance:
 - `task:failed` is the failure event for create-task failures
 - `task-message:append-failed` is the failure event for inbound task-message failures
 - Representative append-failure reasons include `INVALID_CONTENT`, `INTERNAL_ERROR`, and `NOT_FOUND`
+- Handle immediate HTTP errors separately from failures reported after `202 Accepted`; an invalid request rejected before acceptance does not necessarily produce a subscription event
+- Correlate append notifications using the Task Messages response `data.id`, rather than assuming a message alias is always the notification ID
+- Use the structured `reason` for failure handling. Example error messages are illustrative and can vary with the validation failure
 
 For stuck-contact recovery:
 
 - If the middleware application receives `task:failed` for a `CONVERSATION_ALREADY_OPEN` condition
-- Take the earlier task identifier from the error message
+- If the error message provides the existing task identifier, use it to investigate that task
 - Call [End Task](https://developer.webex.com/webex-contact-center/docs/api/v1/tasks-call-control/end-task) only when you have confirmed that the earlier task should be closed.
 - Be cautious before ending the earlier task, because it may still be in a valid queued or active state. Only use End Task when you have confirmed that the earlier task is stale and should be closed
 - Retry Create Task only after the existing task has been cleaned up, if your workflow requires a retry
@@ -664,14 +835,129 @@ Custom Messaging flows support:
 
 `Receive Message` allows the flow to wait for an inbound customer message before the flow continues.
 
-Flow debug and runtime outputs include fields such as:
+Parse `MediaPayload` for the Start node and Send Custom Message activity, and `ChannelProperties` for the Receive Message activity.
 
-- `ErrorCode`
-- `Description`
-- `ErrorMessage`
-- `TrackingId`
+The Start and Receive payloads include validated inbound content; successful inbound `task-message:appended` notifications omit message text and attachment objects.
 
-These values are useful when investigating send or receive failures.
+### Start And Receive Payloads
+
+Start and Receive expose the normalized incoming message envelope, including validated text, accepted attachments, message metadata and security results when available. The following example assumes attachment encryption is disabled and shows a message with one accepted file and one file dropped by malware scanning:
+
+```json
+{
+  "channel": "my-custom-channel",
+  "channelType": "customMessaging",
+  "message": {
+    "messageId": "77777777-7777-4777-8777-777777777777",
+    "aliasId": "4a5a6865-feb6-49c3-a966-d493eccd0cf1",
+    "direction": "inbound",
+    "type": "text-with-attachments",
+    "timestamp": "2026-06-01T07:50:07.453Z",
+    "timestampEpoch": 1780300207453,
+    "text": "Here is the requested invoice.",
+    "attachments": [
+      {
+        "fileName": "invoice.pdf",
+        "mimeType": "application/pdf",
+        "url": "https://attachment-api.example.com/files/invoice.pdf",
+        "encrypted": false,
+        "fileSize": 4096,
+        "dropped": false
+      }
+    ]
+  },
+  "securityComplianceInfo": {
+    "droppedAttachmentCount": 1,
+    "malwareScan": {
+      "isCompliant": false,
+      "droppedAttachmentCount": 1,
+      "validationDone": true,
+      "files": [
+        {
+          "name": "blocked-file.pdf",
+          "errorCode": "MALWARE_DETECTED",
+          "errorMsg": "Malware was detected"
+        }
+      ]
+    },
+    "pciScan": {
+      "isCompliant": true,
+      "textRedacted": false,
+      "validationDone": true,
+      "droppedAttachmentCount": 0,
+      "files": []
+    }
+  }
+}
+```
+
+In the Start activity, use Parse settings to extract attributes from the `MediaPayload` object into flow variables. Enter JSON paths relative to that object, such as `$.message.text`; there is no separate MediaPayload field to select in Parse settings.
+
+For BYOC Receive, use Parse settings to extract attributes from the `ChannelProperties` object. Start and Receive use the same relative JSON paths:
+
+| JSON path | Value to extract |
+| --- | --- |
+| `$.message.text` | Validated incoming text |
+| `$.message.attachments` | Accepted attachments, with returned URLs and encryption metadata |
+| `$.message.aliasId` | Supplied or generated message alias |
+| `$.message.messageId` | Webex message identifier |
+| `$.message.timestampEpoch` | Original message time in epoch milliseconds |
+| `$.securityComplianceInfo` | Available scan and redaction results |
+
+### Send Result Payload
+
+Send Custom Message returns `MediaPayload`. Use its Parse settings to extract message metadata, delivery receipt and security results. The Send result omits message text and attachment objects; the outbound partner webhook carries that content.
+
+Representative Send `MediaPayload`:
+
+```json
+{
+  "channel": "my-custom-channel",
+  "channelType": "customMessaging",
+  "message": {
+    "messageId": "99999999-9999-4999-8999-999999999999",
+    "aliasId": "a1111111-1111-4111-8111-111111111111",
+    "direction": "outbound",
+    "type": "text-with-attachments",
+    "receiptCode": "delivered",
+    "timestamp": "2026-06-01T07:50:17.453Z",
+    "timestampEpoch": 1780300217453
+  },
+  "securityComplianceInfo": {
+    "droppedAttachmentCount": 1,
+    "malwareScan": {
+      "isCompliant": false,
+      "droppedAttachmentCount": 1,
+      "validationDone": true,
+      "files": [
+        {
+          "name": "blocked-file.pdf",
+          "errorCode": "MALWARE_DETECTED",
+          "errorMsg": "Malware was detected"
+        }
+      ]
+    },
+    "pciScan": {
+      "isCompliant": true,
+      "textRedacted": false,
+      "validationDone": true,
+      "droppedAttachmentCount": 0,
+      "files": []
+    }
+  }
+}
+```
+
+Use paths such as `$.message.receiptCode` and `$.securityComplianceInfo`. Save outgoing text or attachment details in flow variables before Send if later activities need them. Payload fields can be unavailable on failure or timeout; check the activity outcome before using parsed values.
+
+### Configure The Flow
+
+- In Start, parse attributes from the `MediaPayload` object into flow variables
+- For Send, parse `MediaPayload`; for BYOC Receive, parse `ChannelProperties`
+- Use `url` in attachment objects built in integrations, scripts or variables. The corresponding Flow Designer input is labelled **File URL**
+- Configure downstream expressions to use the parsed variables, then validate and publish the flow
+
+Flow debug and runtime outputs include `ErrorCode`, `ErrorMessage` and `TrackingId` for investigating send or receive failures. Use structured security results for scan and redaction decisions. Receive can also provide an optional `Description` summary when available.
 
 ## Retrieve Transcripts
 

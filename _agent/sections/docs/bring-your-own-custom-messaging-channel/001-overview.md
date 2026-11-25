@@ -2,7 +2,7 @@
 type: Excerpt
 canonical_url: https://developer.webex.com/docs/bring-your-own-custom-messaging-channel
 lane: production
-source_revision: cms-sha256:e1be19c5cbc77e0871ecf36471448c350db9c17483578e472467c7535beb1e5d
+source_revision: cms-sha256:2f7d0f095a5447b8875eb7a535ea7f1484e157f217bc658add8bbc1c2b4c50cd
 publication_state: verified_published_snapshot
 heading_hierarchy:
 - Overview
@@ -22,8 +22,6 @@ Connect an external messaging channel to Webex Contact Center through middleware
 ## Overview
 
 New
-
-**This feature is currently in Beta. Contact your Cisco team if you want access to this feature.**
 
 In this model:
 

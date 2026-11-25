@@ -2,7 +2,7 @@
 type: Excerpt
 canonical_url: https://developer.webex.com/docs/bring-your-own-custom-messaging-channel
 lane: production
-source_revision: cms-sha256:e1be19c5cbc77e0871ecf36471448c350db9c17483578e472467c7535beb1e5d
+source_revision: cms-sha256:2f7d0f095a5447b8875eb7a535ea7f1484e157f217bc658add8bbc1c2b4c50cd
 publication_state: verified_published_snapshot
 heading_hierarchy:
 - Messaging Policy Behavior
@@ -30,6 +30,8 @@ Messaging policies are configured on the Custom Messaging channel in Control Hub
 - Maximum single attachment size
 - Allowed file types
 
-If an inbound message violates the configured channel policy, the entire message is rejected rather than partially accepted.
+Message text and attachments must comply with your custom channel’s configured limits for text length, attachment count, allowed file types and file sizes. Applicable security policies also apply. The API enforces a maximum of 20,000 text characters and five attachments per message; lower configured limits take precedence.
+
+If an inbound message violates the configured channel policy, the entire message is rejected rather than partially accepted. Attachment drops during PCI or malware scanning are handled separately, as described in [Security, PCI, And Malware Handling](https://developer.webex.com/docs/bring-your-own-custom-messaging-channel#security-pci-and-malware-handling).
 
 If administrators update the messaging policy, inbound middleware traffic starts using the updated policy almost immediately after the configuration change is applied. For outbound agent messaging, the updated policy is applied after the next relevant desktop reload or session refresh.

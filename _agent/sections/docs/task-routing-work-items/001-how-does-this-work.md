@@ -2,7 +2,7 @@
 type: Excerpt
 canonical_url: https://developer.webex.com/docs/task-routing-work-items
 lane: production
-source_revision: cms-sha256:e1be19c5cbc77e0871ecf36471448c350db9c17483578e472467c7535beb1e5d
+source_revision: cms-sha256:2f7d0f095a5447b8875eb7a535ea7f1484e157f217bc658add8bbc1c2b4c50cd
 publication_state: verified_published_snapshot
 heading_hierarchy:
 - How does this work?
@@ -15,13 +15,15 @@ Setup and context to read: [Before You Begin](003-before-you-begin.md)
 
 ## Article introduction
 
-Work Items enable external systems to inject non-conversational tasks into Webex Contact Center and can be orchestrated within Webex CC Flow Designer, routed, handled, monitored, and reported alongside other contact center channel interactions.
+Work Items enable external systems to inject **non-conversational tasks** into Webex Contact Center and can be orchestrated within Webex CC Flow Designer, routed, handled, monitored, and reported alongside other contact center channel interactions.
+
+---
+
+New
 
 **Note:** 
 - Work Items do NOT represent live messaging conversations for unsupported channels such as Viber, Instagram, third-party digital channel gateways, etc. A bring-your-own messaging channel should be used for such use cases.
 - Use Work Items specifically for backend or offline tasks such as CRM leads, claims, faxes, cases, purchase orders, or other work that needs contact center routing and agent handling without a customer messaging on the other side.
-
-Availability for Work Items is currently open for **BETA**. Contact your Cisco team to request access.
 
 ## Selected section
 
@@ -33,7 +35,7 @@ Availability for Work Items is currently open for **BETA**. Contact your Cisco t
   - **Work Item Channel:** Represents the custom channel that you plan to integrate with (e.g. Fax)
   - **Work Item Asset:** Represents an instance of the channel added above and establishes the data schema payloads you wish to honor when injecting tasks into Webex Contact Center
   - **Flow:** Represents the flow that manages orchestrating a work item and routing it to queues
-  - **Queue:** Queues now support a new channel type: `Work Item`
+  - **Queue:** Queues support the `Work Item` channel type
   - **Multimedia Profile:** Determines the no. of tasks an agent can work on in parallel either via automatic contact distribution or self-assignment (cherry picking)
 - Developers use **Public APIs** for the following:
   - **Webhook events:** Subscribe to task lifecycle and message events using **Subscriptions API**

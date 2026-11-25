@@ -2,7 +2,7 @@
 type: Excerpt
 canonical_url: https://developer.webex.com/docs/bring-your-own-custom-messaging-channel
 lane: production
-source_revision: cms-sha256:e1be19c5cbc77e0871ecf36471448c350db9c17483578e472467c7535beb1e5d
+source_revision: cms-sha256:2f7d0f095a5447b8875eb7a535ea7f1484e157f217bc658add8bbc1c2b4c50cd
 publication_state: verified_published_snapshot
 heading_hierarchy:
 - Subscribe To Task Lifecycle Events
@@ -39,44 +39,54 @@ Use the [Webhooks guide](https://developer.webex.com/docs/webhooks-cc) for detai
 
 Note that subscription-based `task-message:appended` and `task-message:append-failed` describe inbound task message flows. The outbound webhook documented in this guide is asset-configured and is not delivered through the Subscription API.
 
-Representative inbound `task-message:appended` subscription webhook:
+A successful initial message and a successful subsequent inbound append each produce a `task-message:appended` notification. The initial notification is separate from the task lifecycle event `task:new`. Inbound success notifications contain `channelProperties` with message metadata and security results when available; they omit message text and attachment objects.
+
+Representative inbound `task-message:appended` subscription webhook for a subsequent message:
 
 ```json
 {
-  "id": "4c2c4890-8a36-4dcc-9702-4c3a4aa1dc51",
+  "id": "90a896bc-5eb5-4d15-8e11-f62e99751c21",
   "specversion": "1.0",
   "type": "task-message:appended",
-  "source": "/com/cisco/wxcc/ed9357d0-3f5d-4c6a-a4fd-111111111111",
-  "comciscoorgid": "cb5901fb-ab66-4377-a7bc-5f0b21896952",
-  "comciscotimestamp": 1779785508649,
+  "source": "/com/cisco/wxcc/33333333-3333-4333-8333-333333333333",
+  "comciscoorgid": "11111111-1111-4111-8111-111111111111",
+  "comciscotimestamp": 1779785569049,
   "datacontenttype": "application/json",
   "data": {
     "taskId": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7",
     "direction": "INBOUND",
-    "messageDirection": "INBOUND",
     "channelType": "customMessaging",
     "channel": "my-custom-channel",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "createdTime": 1779785508649,
+    "createdTime": 1779785568999,
     "eventDetails": "Appended Message to chat successfully.",
-    "channelParams": {
-      "type": "text-with-attachments",
+    "channelProperties": {
+      "channel": "my-custom-channel",
+      "channelType": "customMessaging",
       "message": {
+        "messageId": "22222222-2222-4222-8222-222222222222",
         "aliasId": "90a896bc-5eb5-4d15-8e11-f62e99751c21",
-        "text": "I have more details to share about my order. Please see the attached invoice.",
-        "timestamp": 1779785508649,
-        "attachments": [
-          {
-            "fileName": "invoice.pdf",
-            "mimeType": "application/pdf",
-            "fileUrl": "https://cdn.partner.example.com/files/invoice.pdf"
-          }
-        ]
+        "direction": "inbound",
+        "type": "text-with-attachments",
+        "timestamp": "2026-05-26T08:52:48.649Z",
+        "timestampEpoch": 1779785568649
+      },
+      "securityComplianceInfo": {
+        "droppedAttachmentCount": 0,
+        "malwareScan": {
+          "isCompliant": true,
+          "droppedAttachmentCount": 0,
+          "validationDone": true
+        },
+        "pciScan": {
+          "isCompliant": true,
+          "textRedacted": false,
+          "validationDone": true,
+          "droppedAttachmentCount": 0
+        }
       }
-    },
-    "reason": null,
-    "errorMessage": null
+    }
   }
 }
 ```
@@ -88,20 +98,19 @@ Representative `task:failed` subscription webhook:
   "id": "8be34eb4-d64f-4552-96cc-c9b6e73063c2",
   "specversion": "1.0",
   "type": "task:failed",
-  "source": "/com/cisco/wxcc/ed9357d0-3f5d-4c6a-a4fd-222222222222",
-  "comciscoorgid": "cb5901fb-ab66-4377-a7bc-5f0b21896952",
-  "comciscotimestamp": 1779785508649,
+  "source": "/com/cisco/wxcc/33333333-3333-4333-8333-333333333333",
+  "comciscoorgid": "11111111-1111-4111-8111-111111111111",
+  "comciscotimestamp": "1779785508649",
   "datacontenttype": "application/json",
   "data": {
     "taskId": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "direction": "INBOUND",
+    "direction": "inbound",
     "channel": "my-custom-channel",
     "channelType": "customMessaging",
-    "mediaMgr": "digitalmm",
     "reason": "CONVERSATION_ALREADY_OPEN",
-    "errorMessage": "Conversation is already open with task id ab4ea619-a1ad-33a3-aed9-c2563a9bd6cc",
+    "errorMessage": "Active task already exists for the specified origin and destination, cannot create duplicate task. Open task id: ab4ea619-a1ad-43a3-aed9-c2563a9bd6cc.",
     "failureType": "failed",
     "createdTime": 1779785508649
   }
@@ -115,31 +124,30 @@ Common cases that can result in `task:failed` include:
 - `FEATURE_FLAG_DISABLED`: the organization is not enabled for Custom Messaging
 - `ENTRY_POINT_NOT_FOUND`: the asset does not resolve to an active entry point
 - `ORG_DIGITAL_CONTACT_LIMIT_EXCEEDED`: the organization has reached its active digital contact limit
-- `CONVERSATION_CREATION_FAILED`: downstream conversation creation failed after the request was accepted
-- Validation or policy failures, such as unsupported content, unsupported file types, attachment count limits, or attachment size limits
+- `INVALID_CONTENT`: message validation or policy failed, such as unsupported content, unsupported file types, attachment count limits, or attachment size limits
+- `INTERNAL_ERROR`: an unexpected failure prevented task creation
 
-Representative `task-message:append-failed` subscription webhook:
+Some validation or access failures are returned directly in the HTTP response before a task request is accepted. They do not necessarily produce a `task:failed` event.
+
+Representative `task-message:append-failed` subscription webhook for a request that exceeds the configured attachment count:
 
 ```json
 {
   "id": "64ab4f4a-5c93-4339-b325-3878f289a88f",
   "specversion": "1.0",
   "type": "task-message:append-failed",
-  "source": "/com/cisco/wxcc/ed9357d0-3f5d-4c6a-a4fd-333333333333",
-  "comciscoorgid": "cb5901fb-ab66-4377-a7bc-5f0b21896952",
-  "comciscotimestamp": 1779785508649,
+  "source": "/com/cisco/wxcc/33333333-3333-4333-8333-333333333333",
+  "comciscoorgid": "11111111-1111-4111-8111-111111111111",
+  "comciscotimestamp": 1779785569049,
   "datacontenttype": "application/json",
   "data": {
     "taskId": "044ea619-a0ad-41a3-9ed9-c2563a9bd6b7",
     "direction": "INBOUND",
-    "messageDirection": "INBOUND",
     "channelType": "customMessaging",
     "channel": "my-custom-channel",
     "origin": "customer@example.com",
     "destination": "support@channel.biz",
-    "createdTime": 1779785508649,
-    "eventDetails": null,
-    "channelParams": null,
+    "createdTime": 1779785568999,
     "reason": "INVALID_CONTENT",
     "errorMessage": "The maximum number of attachments allowed is 1."
   }
@@ -149,6 +157,12 @@ Representative `task-message:append-failed` subscription webhook:
 Use the following fields to correlate inbound message webhook processing:
 
 - `data.taskId`: task identifier
-- `data.channelParams.message.aliasId`: middleware message identifier for `task-message:appended` (when `channelParams` is present)
-- `data.messageDirection`: direction of the appended message
-- `id`: webhook event identifier
+- `id`: UUID identifying the notification; for an ordinary append, correlate it with the Task Messages response `data.id`
+- `data.channelProperties.message.aliasId`: the supplied or generated message alias, when properties are present
+- `data.channelProperties.message.messageId`: Webex message identifier, separate from the alias and notification ID
+- `data.direction`: direction of the task
+- `data.channelProperties.message.direction`: direction of the message, when properties are present
+
+For the task-message notifications shown here, `data.direction` is `INBOUND`. Nested message direction uses lowercase `inbound` for customer messages and `outbound` for agent or Flow messages. An outbound reply does not change the task direction.
+
+`task-message:append-failed` contains error metadata without `channelProperties`; use its `id` and `data.taskId` for correlation. For inbound task-message success and failure notifications, `data.createdTime` is the notification creation time. Use `message.timestampEpoch` for the original message time when message metadata is present. Returned messages can contain both an ISO `timestamp` and its epoch-millisecond `timestampEpoch`.

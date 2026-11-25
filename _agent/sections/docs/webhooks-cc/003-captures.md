@@ -2,7 +2,7 @@
 type: Excerpt
 canonical_url: https://developer.webex.com/docs/webhooks-cc
 lane: production
-source_revision: cms-sha256:e1be19c5cbc77e0871ecf36471448c350db9c17483578e472467c7535beb1e5d
+source_revision: cms-sha256:2f7d0f095a5447b8875eb7a535ea7f1484e157f217bc658add8bbc1c2b4c50cd
 publication_state: verified_published_snapshot
 heading_hierarchy:
 - Captures
@@ -104,7 +104,7 @@ For voice and digital interactions, more than one `transcription:available` even
 | `taskId` | `string` | The task ID associated with the transcript. | `"e7506dab-4430-4d1b-8834-e994c9862eed"` |
 | `filePath` | `string` | The Captures API path that the integration should use to retrieve the available transcript details for the task. | `"https://api.wxcc-us1.cisco.com/v1/captures/query"` |
 | `contactType` | `string` | The media family for which the transcript is available. This is `telephony` for voice transcripts and can be a digital channel family or admin-configured digital channel value for digital transcripts. | `"telephony"` |
-| `channelType` | `string` | Indicates the channel type of a task. | `"telephony", "chat", "email", "social", "customMessaging"` |
+| `channelType` | `string` | Indicates the channel type of a task. | `"telephony", "chat", "email", "social", "customMessaging", "workItem"` |
 | `createdTime` | `integer` | The time that the transcript event occurred in epoch milliseconds. | `1781594954447` |
 
 For capture recovery, consult [Search](https://developer.webex.com/docs/api/v1/search/search) and [List Captures](https://developer.webex.com/docs/api/v1/captures/list-captures).

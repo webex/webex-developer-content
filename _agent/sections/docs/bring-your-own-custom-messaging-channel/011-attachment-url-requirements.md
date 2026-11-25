@@ -2,7 +2,7 @@
 type: Excerpt
 canonical_url: https://developer.webex.com/docs/bring-your-own-custom-messaging-channel
 lane: production
-source_revision: cms-sha256:e1be19c5cbc77e0871ecf36471448c350db9c17483578e472467c7535beb1e5d
+source_revision: cms-sha256:2f7d0f095a5447b8875eb7a535ea7f1484e157f217bc658add8bbc1c2b4c50cd
 publication_state: verified_published_snapshot
 heading_hierarchy:
 - Attachment URL Requirements
@@ -29,12 +29,11 @@ These requirements apply to middleware-provided attachment URLs used by:
 
 Requirements:
 
-- The attachment URL must use `https`
-- The attachment URL must be retrievable by the platform
-- File type is resolved from the URL extension when present
-- If the URL has no usable extension, the platform uses the provided filename as the fallback
-- If the effective file type is unsupported, the message is rejected
-- File size must be determinable from remote metadata such as `Content-Length`
-- If file size cannot be determined reliably, the message is rejected
+- Supply the attachment URL in the JSON key `url`; it must use `https` and be at most 2,000 characters long
+- The service must be able to download the file directly, without a separate login or Authorization header. A signed or short-lived URL is acceptable if it remains valid until the file is downloaded
+- Supply a nonempty `fileName`. `mimeType` is optional; omitting it does not bypass file-type or content validation
+- File-type validation uses the URL extension when present. If no usable extension is present, it can use the filename and content type returned by the file server, together with the supplied MIME type when applicable
+- If the effective file type is unsupported by the configured channel policy, the message is rejected
+- When the configured policy enforces attachment size limits, file size must be determinable from remote metadata such as `Content-Length`; otherwise, the message is rejected
 
 These rules are separate from agent desktop attachment uploads, which follow a different UI-driven validation path.
